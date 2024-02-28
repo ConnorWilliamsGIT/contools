@@ -27,7 +27,11 @@ jobs:
 
       - name: Deploy to gh pages
         run: |
+          git config --global user.email ${{ secrets.EMAIL }}
+          git config --global user.name ${{ secrets.USERNAME }}
           npx angular-cli-ghpages --dir=dist/contools/browser --no-silent
         env:
           CI: true
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
+
+
