@@ -1,1 +1,0 @@
-import{Ea as r,Fa as s,O as o,xa as i,ya as a}from"./chunk-RFGCOCVM.js";var m=(()=>{let e=class e{};e.\u0275fac=function(n){return new(n||e)},e.\u0275cmp=o({type:e,selectors:[["app-boids"]],standalone:!0,features:[s],decls:2,vars:0,template:function(n,d){n&1&&(i(0,"p"),r(1,"boids works!"),a())}});let t=e;return t})();export{m as BoidsComponent};
