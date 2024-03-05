@@ -17,7 +17,7 @@ jobs:
         with:
           webhook_id: ${{ secrets.WEBHOOK_ID }}
           webhook_token: ${{ secrets.WEBHOOK_TOKEN }}
-          args: "Contools deploy started!\nCommit Message: ${{ github.event.head_commit.message }}"
+          args: "```Contools deploy started!\nCommit Message: ${{ github.event.head_commit.message }}```"
 
   build:
     runs-on: ubuntu-latest
@@ -59,5 +59,5 @@ jobs:
         with:
           webhook_id: ${{ secrets.WEBHOOK_ID }}
           webhook_token: ${{ secrets.WEBHOOK_TOKEN }}
-          args: "Contools deployed!\nCommit Message: ${{ github.event.head_commit.message }}"
+          args: "```Contools deployed!\nCommit Message: ${{ github.event.head_commit.message }}```"
 
