@@ -2,7 +2,28 @@ import {AfterViewInit, Component, ElementRef, HostListener, ViewChild} from '@an
 import {RouterLink} from "@angular/router";
 import {LayoutComponent} from "../../components/layout/layout.component";
 
-type coordinate = { x: number, y: number }
+type coordinate = { x: number, y: number}
+type edge = { start: coordinate, end: coordinate}
+
+
+function containsEdge(edge: edge, list: edge[]): boolean {
+    let i;
+    for (i = 0; i < list.length; i++) {
+        if ((list[i].start === edge.start && list[i].end === edge.end) || (list[i].start === edge.end && list[i].end === edge.start)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+function printEdgeList(list: edge[]) {
+    console.log("Edge List:");
+    let i;
+    for (i = 0; i < list.length; i++) {
+        console.log("Edge " + i + ": " + list[i].start.x + ", " + list[i].start.y + " -> " + list[i].end.x + ", " + list[i].end.y);
+    }
+}
 
 @Component({
   selector: 'app-home',
@@ -22,7 +43,7 @@ export class HomeComponent implements AfterViewInit {
   private ctx: any;
   private nodeRadius: number = 15;
   private nodeList: coordinate[] = [];
-  private edgeList: { start: coordinate, end: coordinate }[] = [];
+  private edgeList: edge[] = [];
   private drawingEdge: boolean = false;
 
   ngAfterViewInit(): void {
@@ -93,6 +114,8 @@ export class HomeComponent implements AfterViewInit {
     this.edgeList.forEach((edge) => this.drawEdge(edge.start, edge.end));
   }
 
+
+
   checkSpace(x: number, y: number): { occupied: boolean, node: coordinate } {
     for (let i = 0; i < this.nodeList.length; i++) {
       const node = this.nodeList[i];
@@ -116,16 +139,25 @@ export class HomeComponent implements AfterViewInit {
   @HostListener('click', ['$event'])
   onClick(event: MouseEvent) {
     const coordinate = this.pageToCanvasPos(event.pageX, event.pageY);
-    const node_check = this.checkSpace(coordinate.x, coordinate.y);
-    if (!node_check.occupied && !this.drawingEdge) {
+    const nodeCheck = this.checkSpace(coordinate.x, coordinate.y);
+    if (!nodeCheck.occupied && !this.drawingEdge) {
       this.nodeList.push(coordinate);
       this.updateCanvas();
-    } else if (node_check.occupied && !this.drawingEdge) {
+    } else if (nodeCheck.occupied && !this.drawingEdge) {
       this.drawingEdge = true;
-      this.edgeList.push({start: node_check.node, end: coordinate});
-    } else if (node_check.occupied && this.drawingEdge) {
+      this.edgeList.push({start: nodeCheck.node, end: coordinate});
+
+    } else if (nodeCheck.occupied && this.drawingEdge) {
       this.drawingEdge = false;
-      this.edgeList[this.edgeList.length - 1].end = node_check.node;
+      if (this.edgeList[this.edgeList.length - 1].start !== nodeCheck.node && !containsEdge({start: this.edgeList[this.edgeList.length - 1].start, end: nodeCheck.node}, this.edgeList)) {
+        this.edgeList[this.edgeList.length - 1].end = nodeCheck.node;
+        printEdgeList(this.edgeList);
+      } else {
+        this.edgeList.pop();
+      }
+    } else if (!nodeCheck.occupied && this.drawingEdge) {
+      this.drawingEdge = false;
+      this.edgeList.pop();
     }
     this.updateCanvas();
   }
