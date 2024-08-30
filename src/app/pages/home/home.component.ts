@@ -1,29 +1,10 @@
 import {AfterViewInit, Component, ElementRef, HostListener, ViewChild} from '@angular/core';
 import {RouterLink} from "@angular/router";
 import {LayoutComponent} from "../../components/layout/layout.component";
+import {Node} from "../../models/node.class";
+import {coordinate} from "../../models/coordinate.type";
 
-type coordinate = { x: number, y: number}
-type edge = { start: coordinate, end: coordinate}
-
-
-function containsEdge(edge: edge, list: edge[]): boolean {
-    let i;
-    for (i = 0; i < list.length; i++) {
-        if ((list[i].start === edge.start && list[i].end === edge.end) || (list[i].start === edge.end && list[i].end === edge.start)) {
-            return true;
-        }
-    }
-
-    return false;
-}
-
-function printEdgeList(list: edge[]) {
-    console.log("Edge List:");
-    let i;
-    for (i = 0; i < list.length; i++) {
-        console.log("Edge " + i + ": " + list[i].start.x + ", " + list[i].start.y + " -> " + list[i].end.x + ", " + list[i].end.y);
-    }
-}
+type graph = { nodes: Node[] }
 
 @Component({
   selector: 'app-home',
@@ -42,9 +23,11 @@ export class HomeComponent implements AfterViewInit {
 
   private ctx: any;
   private nodeRadius: number = 15;
-  private nodeList: coordinate[] = [];
-  private edgeList: edge[] = [];
+  private nodeList: Node[] = [];
+  private graphList: graph[] = [];
   private drawingEdge: boolean = false;
+  private tempEdgeSource: Node = new Node(0, 0);
+  private tempEdgeEnd: Node = new Node(0, 0);
 
   ngAfterViewInit(): void {
     if (this.canvas === undefined || this.canvasFrame === undefined) {
@@ -85,21 +68,21 @@ export class HomeComponent implements AfterViewInit {
     img.src = "https://media.licdn.com/dms/image/D5603AQHNteNbj0wR1w/profile-displayphoto-shrink_800_800/0/1705715328463?e=1715212800&v=beta&t=wVcIyNOl3h_1b_FK7aloU_aWNC7fHl9UrdbQhSdj1XU";
   }
 
-  pageToCanvasPos(x: number, y: number): coordinate {
+  pageToCanvasPos(coord: coordinate): coordinate {
     return {
-      x: x - this.canvas?.nativeElement.offsetLeft,
-      y: y - this.canvas?.nativeElement.offsetTop
+      x: coord.x - this.canvas?.nativeElement.offsetLeft,
+      y: coord.y - this.canvas?.nativeElement.offsetTop
     }
   }
 
-  drawNode(x: number, y: number) {
+  drawNode(node: Node) {
     this.ctx.beginPath();
-    this.ctx.arc(x, y, this.nodeRadius, 0, 2 * Math.PI);
+    this.ctx.arc(node.x, node.y, this.nodeRadius, 0, 2 * Math.PI);
     this.ctx.closePath();
     this.ctx.fill();
   }
 
-  drawEdge(start: coordinate, end: coordinate) {
+  drawEdge(start: Node, end: Node) {
     this.ctx.lineWidth = 4;
     this.ctx.beginPath();
     this.ctx.moveTo(start.x, start.y);
@@ -110,55 +93,91 @@ export class HomeComponent implements AfterViewInit {
 
   updateCanvas() {
     this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
-    this.nodeList.forEach((node) => this.drawNode(node.x, node.y));
-    this.edgeList.forEach((edge) => this.drawEdge(edge.start, edge.end));
+    this.graphList.forEach((graph) => this.drawGraph(graph));
+  }
+
+  drawGraph(graph: graph) {
+    graph.nodes.forEach((node) => {
+      this.drawNode(node);
+      node.adjacentNodes.forEach((adjNode) => this.drawEdge(node, adjNode));
+    });
   }
 
 
-
-  checkSpace(x: number, y: number): { occupied: boolean, node: coordinate } {
-    for (let i = 0; i < this.nodeList.length; i++) {
-      const node = this.nodeList[i];
-      const distance = Math.sqrt(Math.pow(x - node.x, 2) + Math.pow(y - node.y, 2));
-      if (distance < this.nodeRadius * 2) {
-        return {occupied: true, node: node};
+  checkSpace(coordinate: coordinate): { occupied: boolean, node: Node } {
+    for (let i = 0; i < this.graphList.length; i++) {
+      const graph = this.graphList[i];
+      for (let j = 0; j < graph.nodes.length; j++) {
+        const currentNode = graph.nodes[j];
+        const distance = Math.sqrt(Math.pow(coordinate.x - currentNode.x, 2) + Math.pow(coordinate.y - currentNode.y, 2));
+        if (distance < this.nodeRadius * 2) {
+          return {occupied: true, node: currentNode};
+        }
       }
     }
-    return {occupied: false, node: {x: 0, y: 0}};
+
+    return {occupied: false, node: new Node(0, 0)};
   }
 
   @HostListener('mousemove', ['$event'])
   onMousemove(event: MouseEvent) {
     if (this.drawingEdge) {
-      this.edgeList[this.edgeList.length - 1].end = this.pageToCanvasPos(event.pageX, event.pageY);
       this.updateCanvas();
+      this.tempEdgeEnd.setCoordinate(this.pageToCanvasPos({x: event.pageX, y: event.pageY}));
+      this.drawEdge(this.tempEdgeSource, this.tempEdgeEnd);
     }
   }
 
   // add click listener
   @HostListener('click', ['$event'])
   onClick(event: MouseEvent) {
-    const coordinate = this.pageToCanvasPos(event.pageX, event.pageY);
-    const nodeCheck = this.checkSpace(coordinate.x, coordinate.y);
-    if (!nodeCheck.occupied && !this.drawingEdge) {
-      this.nodeList.push(coordinate);
-      this.updateCanvas();
-    } else if (nodeCheck.occupied && !this.drawingEdge) {
+    const coordinate: coordinate = this.pageToCanvasPos({x: event.pageX, y: event.pageY});
+    const nodeCheck = this.checkSpace(coordinate);
+    if (!nodeCheck.occupied && !this.drawingEdge) {                 // clicked on empty space, no edge drawing
+      this.nodeList.push(new Node(coordinate.x, coordinate.y));
+      this.graphList.push({nodes: [this.nodeList[this.nodeList.length - 1]]});
+    } else if (nodeCheck.occupied && !this.drawingEdge) {           // clicked on node, no edge drawing
       this.drawingEdge = true;
-      this.edgeList.push({start: nodeCheck.node, end: coordinate});
-
-    } else if (nodeCheck.occupied && this.drawingEdge) {
+      this.tempEdgeSource = nodeCheck.node;
+    } else if (nodeCheck.occupied && this.drawingEdge) {            // clicked on node, while edge drawing
       this.drawingEdge = false;
-      if (this.edgeList[this.edgeList.length - 1].start !== nodeCheck.node && !containsEdge({start: this.edgeList[this.edgeList.length - 1].start, end: nodeCheck.node}, this.edgeList)) {
-        this.edgeList[this.edgeList.length - 1].end = nodeCheck.node;
-        printEdgeList(this.edgeList);
-      } else {
-        this.edgeList.pop();
+      if (nodeCheck.node != this.tempEdgeSource && !this.tempEdgeSource.isAdjacent(nodeCheck.node)) {
+        // Node edge successfully created
+        this.tempEdgeSource.addAdjacentNode(nodeCheck.node);
+        nodeCheck.node.addAdjacentNode(this.tempEdgeSource);
+        this.createGraphs();
       }
-    } else if (!nodeCheck.occupied && this.drawingEdge) {
+    } else if (!nodeCheck.occupied && this.drawingEdge) {           // clicked on empty space, while edge drawing
       this.drawingEdge = false;
-      this.edgeList.pop();
     }
     this.updateCanvas();
+  }
+
+  createGraphs() {
+    this.nodeList.forEach((node) => node.visited = false);
+    this.graphList = [];
+
+    for (let i = 0; i < this.nodeList.length; i++) {
+      const node = this.nodeList[i];
+      if (!node.visited) {
+        const graph = {nodes: []};
+        this.graphList.push(graph);
+        this.visitNode(node, graph);
+      }
+    }
+
+    console.log(this.graphList);
+  }
+
+  visitNode(node: Node, graph: graph) {
+    if (node.visited) {
+      return;
+    }
+
+    graph.nodes.push(node);
+    node.visited = true;
+    for (let i = 0; i < node.adjacentNodes.length; i++) {
+      this.visitNode(node.adjacentNodes[i], graph);
+    }
   }
 }
