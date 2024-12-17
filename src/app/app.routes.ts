@@ -1,9 +1,14 @@
-import { Routes } from '@angular/router';
+import {Routes} from '@angular/router';
 
 export const routes: Routes = [
   {
-    path: '',
+    path: 'graphs',
     loadComponent: () => import('./pages/home/home.component').then(m => m.HomeComponent),
+  },
+  {
+    path: '',
+    redirectTo: '/graphs',
+    pathMatch: 'full'
   },
   {
     path: 'boids',
