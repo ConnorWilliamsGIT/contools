@@ -20,7 +20,6 @@ export class HomeComponent implements AfterViewInit {
   @ViewChild("canvas") canvas?: ElementRef;
   @ViewChild("canvasFrame") canvasFrame?: ElementRef;
   @ViewChild("image") image?: ElementRef;
-
   private ctx: any;
   private nodeRadius: number = 15;
   private nodeList: Node[] = [];
@@ -28,6 +27,13 @@ export class HomeComponent implements AfterViewInit {
   private drawingEdge: boolean = false;
   private tempEdgeSource: Node = new Node(0, 0);
   private tempEdgeEnd: Node = new Node(0, 0);
+
+  // Signals example
+  // test = signal(2);
+  // ifTrue = computed(() => {
+  //   console.log('updated')
+  //   return this.test() === 2
+  // });
 
   ngAfterViewInit(): void {
     if (this.canvas === undefined || this.canvasFrame === undefined) {
@@ -79,6 +85,7 @@ export class HomeComponent implements AfterViewInit {
     this.ctx.beginPath();
     this.ctx.arc(node.x, node.y, this.nodeRadius, 0, 2 * Math.PI);
     this.ctx.closePath();
+    this.ctx.fillStyle = "white";
     this.ctx.fill();
   }
 
@@ -88,6 +95,7 @@ export class HomeComponent implements AfterViewInit {
     this.ctx.moveTo(start.x, start.y);
     this.ctx.lineTo(end.x, end.y);
     this.ctx.closePath();
+    this.ctx.strokeStyle = "white"
     this.ctx.stroke();
   }
 
