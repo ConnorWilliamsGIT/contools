@@ -1,10 +1,10 @@
-<div class="flex bg-indigo-100 p-2 gap-2">
-<button class="btn" [routerLinkActive]="['btn-active']" [routerLink]="['/']" [routerLinkActiveOptions]="{ exact: true }">
-  Home
-</button>
-<button class="btn"  [routerLinkActive]="['btn-active']"  [routerLink]="['boids']">
-  Boids
-</button>
+<div class="flex w-full bg-base-100 border-b-2 p-1 gap-1">
+  <button [routerLinkActiveOptions]="{ exact: true }" [routerLinkActive]="['btn-active']" [routerLink]="['/']"
+          class="btn btn-primary rounded-none">
+    Graphs
+  </button>
+  <button [routerLinkActive]="['btn-active']" [routerLink]="['/boids']" class="btn btn-primary rounded-none">
+    Boids
+  </button>
 </div>
 
-<!--bg-indigo-300 hover:bg-indigo-400 text-white font-bold py-2 px-4 rounded-->

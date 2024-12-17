@@ -1,8 +1,17 @@
-<div class="flex p-2 gap-2 h-[calc(100vh-64px)]">
-  <div class="font-bold w-1/3 bg-zinc-50 h-full rounded">
-    <ng-content select="[settings]"/>
+<div class="flex min-h-screen">
+  <div class="flex flex-col w-1/4">
+
+
+    <app-navbar/>
+
+    <div
+      class="font-bold text-white bg-base-100 border-r-2 flex-1">
+      <ng-content select="[settings]"/>
+    </div>
   </div>
-  <div class="w-2/3 bg-zinc-50 h-full rounded overflow-hidden">
+
+  <div
+    class="flex-1 inset-0 bg-base-100 bg-[radial-gradient(#94a3b8_2px,transparent_1px)] [background-size:40px_40px] row-span-2">
     <ng-content select="[canvas]"/>
   </div>
 </div>
