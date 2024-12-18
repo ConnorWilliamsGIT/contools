@@ -1,10 +1,28 @@
-<div class="flex w-full bg-base-100 border-b-2 p-1 gap-1">
-  <button [routerLinkActiveOptions]="{ exact: true }" [routerLinkActive]="['btn-active']" [routerLink]="['/']"
-          class="btn btn-primary rounded-none">
-    Graphs
-  </button>
-  <button [routerLinkActive]="['btn-active']" [routerLink]="['/boids']" class="btn btn-primary rounded-none">
-    Boids
-  </button>
+<div class="flex items-center bg-base-100 p-1 gap-1">
+  <h1 class="text-2xl font-bold pl-2 flex-1">Contools</h1>
+  <div class="dropdown dropdown-bottom dropdown-end">
+    <div class="btn m-1 w-32" role="button" tabindex="0">
+      {{ pageName() }}
+      <svg aria-hidden="true" class="w-4 h-4" fill="none"
+           height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
+        <path d="m19 9-7 7-7-7" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+      </svg>
+    </div>
+    <ul class="dropdown-content outline outline-accent menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow space-y-1"
+        tabindex="0">
+      <li>
+        <a ariaCurrentWhenActive="page" routerLink="/graphs" routerLinkActive="active bg-primary">
+          Graphs
+        </a>
+      </li>
+      <li>
+        <a ariaCurrentWhenActive="page" routerLink="/boids" routerLinkActive="active">
+          Boids
+        </a>
+      </li>
+    </ul>
+  </div>
 </div>
+<hr
+  class="h-px border-t-0 bg-base-100 bg-gradient-to-r from-transparent via-base-content to-transparent dark:via-base-content/30"/>
 
