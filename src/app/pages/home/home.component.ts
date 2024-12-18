@@ -140,6 +140,11 @@ export class HomeComponent implements AfterViewInit {
   @HostListener('click', ['$event'])
   onClick(event: MouseEvent) {
     const coordinate: coordinate = this.pageToCanvasPos({x: event.pageX, y: event.pageY});
+    if (coordinate.x < 0 || coordinate.y < 0 || coordinate.x > this.ctx.canvas.width || coordinate.y > this.ctx.canvas.height) {
+      this.drawingEdge = false;
+      this.updateCanvas();
+      return;
+    }
     const nodeCheck = this.checkSpace(coordinate);
     if (!nodeCheck.occupied && !this.drawingEdge) {                 // clicked on empty space, no edge drawing
       this.nodeList.push(new Node(coordinate.x, coordinate.y));
