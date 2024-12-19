@@ -1,4 +1,13 @@
-import {AfterViewInit, Component, ElementRef, HostListener, ViewChild} from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  computed,
+  ElementRef,
+  HostListener,
+  signal,
+  ViewChild,
+  WritableSignal
+} from '@angular/core';
 import {RouterLink} from "@angular/router";
 import {LayoutComponent} from "../../components/layout/layout.component";
 import {Node} from "../../models/node.class";
@@ -23,7 +32,11 @@ export class HomeComponent implements AfterViewInit {
   private ctx: any;
   private nodeRadius: number = 15;
   private nodeList: Node[] = [];
-  private graphList: graph[] = [];
+  private graphList: WritableSignal<graph[]> = signal([]);
+  graphString = computed(() => {
+    console.log('updated graph string')
+    return this.graphsToString(this.graphList());
+  });
   private drawingEdge: boolean = false;
   private tempEdgeSource: Node = new Node(0, 0);
   private tempEdgeEnd: Node = new Node(0, 0);
@@ -101,7 +114,7 @@ export class HomeComponent implements AfterViewInit {
 
   updateCanvas() {
     this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
-    this.graphList.forEach((graph) => this.drawGraph(graph));
+    this.graphList().forEach((graph) => this.drawGraph(graph));
   }
 
   drawGraph(graph: graph) {
@@ -113,8 +126,8 @@ export class HomeComponent implements AfterViewInit {
 
 
   checkSpace(coordinate: coordinate): { occupied: boolean, node: Node } {
-    for (let i = 0; i < this.graphList.length; i++) {
-      const graph = this.graphList[i];
+    for (let i = 0; i < this.graphList().length; i++) {
+      const graph = this.graphList()[i];
       for (let j = 0; j < graph.nodes.length; j++) {
         const currentNode = graph.nodes[j];
         const distance = Math.sqrt(Math.pow(coordinate.x - currentNode.x, 2) + Math.pow(coordinate.y - currentNode.y, 2));
@@ -148,7 +161,10 @@ export class HomeComponent implements AfterViewInit {
     const nodeCheck = this.checkSpace(coordinate);
     if (!nodeCheck.occupied && !this.drawingEdge) {                 // clicked on empty space, no edge drawing
       this.nodeList.push(new Node(coordinate.x, coordinate.y));
-      this.graphList.push({nodes: [this.nodeList[this.nodeList.length - 1]]});
+      this.graphList.update(arr => {
+        return [...arr, {nodes: [this.nodeList[this.nodeList.length - 1]]}]
+      });
+
     } else if (nodeCheck.occupied && !this.drawingEdge) {           // clicked on node, no edge drawing
       this.drawingEdge = true;
       this.tempEdgeSource = nodeCheck.node;
@@ -168,18 +184,30 @@ export class HomeComponent implements AfterViewInit {
 
   createGraphs() {
     this.nodeList.forEach((node) => node.visited = false);
-    this.graphList = [];
+    this.graphList.set([]);
 
     for (let i = 0; i < this.nodeList.length; i++) {
       const node = this.nodeList[i];
       if (!node.visited) {
         const graph = {nodes: []};
-        this.graphList.push(graph);
+        this.graphList().push(graph);
         this.visitNode(node, graph);
       }
     }
 
-    console.log(this.graphList);
+    console.log(this.graphList());
+  }
+
+  graphsToString(graphs: graph[]): string {
+    let graphsString = "";
+    for (let i = 0; i < graphs.length; i++) {
+      graphsString += this.graphToString(graphs[i]);
+    }
+    return graphsString
+  }
+
+  graphToString(graph: graph): string {
+    return String(graph.nodes.length);
   }
 
   visitNode(node: Node, graph: graph) {
