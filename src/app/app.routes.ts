@@ -4,6 +4,9 @@ export const routes: Routes = [
   {
     path: 'graphs',
     loadComponent: () => import('./pages/home/home.component').then(m => m.HomeComponent),
+    data: {
+      pageName: 'Graphs'
+    }
   },
   {
     path: '',
@@ -13,6 +16,9 @@ export const routes: Routes = [
   {
     path: 'boids',
     loadComponent: () => import('./pages/boids/boids.component').then(m => m.BoidsComponent),
+    data: {
+      pageName: 'Boids'
+    }
   },
 
 ];

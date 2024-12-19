@@ -1,5 +1,6 @@
-import {Component, signal} from '@angular/core';
-import {NavigationEnd, Router, RouterLink, RouterLinkActive} from "@angular/router";
+import {Component, inject} from '@angular/core';
+import {ActivatedRoute, RouterLink, RouterLinkActive} from "@angular/router";
+import {map} from "rxjs";
 
 @Component({
   selector: 'app-navbar',
@@ -12,18 +13,8 @@ import {NavigationEnd, Router, RouterLink, RouterLinkActive} from "@angular/rout
   styleUrl: './navbar.component.scss'
 })
 export class NavbarComponent {
-  pageName = signal('Graphs');
+  // get data from router
+  pageName = inject(ActivatedRoute).data.pipe(map(data => data['pageName']));
 
-  constructor(private router: Router) {
-    this.router.events.subscribe(event => {
-      if (event instanceof NavigationEnd) {
-        if (event.urlAfterRedirects.includes('boids')) { // TODO: Make robust
-          this.pageName.set('Boids');
-        } else {
-          this.pageName.set('Graphs');
-        }
-      }
-    });
-  }
 
 }
