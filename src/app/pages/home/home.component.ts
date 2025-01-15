@@ -228,24 +228,38 @@ export class HomeComponent implements AfterViewInit {
   graphsToString(graphs: graph[]): string {
     let graphsString = "";
     for (let i = 0; i < graphs.length; i++) {
+      graphsString += "Graph " + (i + 1) + "\n";
       graphsString += this.graphToString(graphs[i]);
+      graphsString += "\n\n";
     }
     return graphsString
   }
 
   graphToString(graph: graph): string {
-    return String(graph.nodes.length);
+    let graphString = "";
+    for (let i = 0; i < graph.nodes.length; i++) {
+      graphString += graph.nodes[i].id;
+      graphString += " -> ";
+      for (let j = 0; j < graph.nodes[i].adjacentNodes.length; j++) {
+        graphString += graph.nodes[i].adjacentNodes[j].id;
+        graphString += " ";
+      }
+      graphString += "\n";
+    }
+    graphString += "\n";
+    return graphString;
   }
 
-  visitNode(node: Node, graph: graph) {
+  visitNode(node: Node, graph: graph, id: number = 0) {
     if (node.visited) {
       return;
     }
 
     graph.nodes.push(node);
+    node.setId(id);
     node.visited = true;
     for (let i = 0; i < node.adjacentNodes.length; i++) {
-      this.visitNode(node.adjacentNodes[i], graph);
+      this.visitNode(node.adjacentNodes[i], graph, ++id);
     }
   }
 }
