@@ -5,6 +5,7 @@ export class Node {
   public y: number = 0;
   public adjacentNodes: Node[] = [];
   public visited: boolean = false;
+  public id = 0;
 
   constructor(x: number, y: number) {
     this.x = x;
@@ -14,6 +15,21 @@ export class Node {
   // getter for visited
   get isVisited(): boolean {
     return this.visited;
+  }
+
+  // getter for id
+  get getId(): number {
+    return this.id;
+  }
+
+  // setter for visited
+  setVisited(visited: boolean) {
+    this.visited = visited;
+  }
+
+  // setter for id
+  setId(id: number) {
+    this.id = id;
   }
 
   setCoordinate(coordinate: coordinate) {
