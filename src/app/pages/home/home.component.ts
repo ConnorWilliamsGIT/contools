@@ -94,11 +94,33 @@ export class HomeComponent implements AfterViewInit {
     }
   }
 
-  drawNode(node: Node) {
+  drawNode(node: Node, colour: string = "white") {
     this.ctx.beginPath();
     this.ctx.arc(node.x, node.y, this.nodeRadius, 0, 2 * Math.PI);
     this.ctx.closePath();
-    this.ctx.fillStyle = "white";
+    this.ctx.fillStyle = colour;
+    this.ctx.fill();
+  }
+
+  getNodeDistance(node1: Node, node2: Node): number {
+    return Math.sqrt(Math.pow(node1.x - node2.x, 2) + Math.pow(node1.y - node2.y, 2));
+  }
+
+  drawSelectNode(node: Node) {
+    // calculate angle at which the tempEdgeEnd is from the node
+    let gap = 0.4 * Math.PI
+    let thickness = this.nodeRadius * 0.2;
+    let outerRadius = this.nodeRadius * 1.4;
+    const angle = Math.atan2(this.tempEdgeEnd.y - node.y, this.tempEdgeEnd.x - node.x);
+    if (this.getNodeDistance(node, this.tempEdgeEnd) < outerRadius) {
+      gap = 0;
+    }
+    let angle_offset = angle + gap / 2;
+    this.ctx.beginPath();
+    this.ctx.arc(node.x, node.y, outerRadius, angle_offset, 2 * Math.PI - gap + angle_offset, false);
+    this.ctx.arc(node.x, node.y, outerRadius - thickness, 2 * Math.PI - gap + angle_offset, angle_offset, true);
+    this.ctx.closePath();
+    this.ctx.fillStyle = "lightblue";
     this.ctx.fill();
   }
 
@@ -115,6 +137,9 @@ export class HomeComponent implements AfterViewInit {
   updateCanvas() {
     this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
     this.graphList().forEach((graph) => this.drawGraph(graph));
+    if (this.drawingEdge) {
+      this.drawSelectNode(this.tempEdgeSource);
+    }
   }
 
   drawGraph(graph: graph) {
