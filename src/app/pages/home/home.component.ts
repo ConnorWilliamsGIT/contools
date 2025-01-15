@@ -103,6 +103,7 @@ export class HomeComponent implements AfterViewInit {
   }
 
   getNodeDistance(node1: Node, node2: Node): number {
+    console.log(Math.sqrt(Math.pow(node1.x - node2.x, 2) + Math.pow(node1.y - node2.y, 2)));
     return Math.sqrt(Math.pow(node1.x - node2.x, 2) + Math.pow(node1.y - node2.y, 2));
   }
 
@@ -193,6 +194,7 @@ export class HomeComponent implements AfterViewInit {
     } else if (nodeCheck.occupied && !this.drawingEdge) {           // clicked on node, no edge drawing
       this.drawingEdge = true;
       this.tempEdgeSource = nodeCheck.node;
+      this.tempEdgeEnd.setCoordinate(coordinate);
     } else if (nodeCheck.occupied && this.drawingEdge) {            // clicked on node, while edge drawing
       this.drawingEdge = false;
       if (nodeCheck.node != this.tempEdgeSource && !this.tempEdgeSource.isAdjacent(nodeCheck.node)) {
