@@ -210,9 +210,13 @@ export class HomeComponent implements AfterViewInit {
     if (this.current_mode === this.Mode.DELETE) {
       this.current_mode = this.Mode.DEFAULT;
       this.deleteButton?.nativeElement.classList.remove("btn-error");
+      this.deleteButton?.nativeElement.classList.add("opacity-50");
+      this.deleteButton?.nativeElement.classList.remove("opacity-100");
     } else {
       this.current_mode = this.Mode.DELETE;
       this.deleteButton?.nativeElement.classList.add("btn-error");
+      this.deleteButton?.nativeElement.classList.remove("opacity-50");
+      this.deleteButton?.nativeElement.classList.add("opacity-100");
     }
     this.updateCanvas();
   }
