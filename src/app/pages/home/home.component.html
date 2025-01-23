@@ -4,8 +4,28 @@
       {{ graphString() }}
     </div>
   </div>
-  <div #canvasFrame canvas class="w-full h-full">
+  <div #canvasFrame canvas class="w-full h-full relative">
     <canvas #canvas>
     </canvas>
+    <!--     padding between elements-->
+    <div canvas_overlay class="absolute bottom-5 left-5 space-x-2 items-start">
+      <button #deleteButton
+              (click)="toggleDeleteMode()"
+              (mouseout)="isButtonHovered(false);"
+              (mouseover)="isButtonHovered(true);"
+              class="btn btn-square btn-outline"
+              tabindex="-1">
+        Delete X
+      </button>
+      <button #resetButton
+              (click)="resetGraphs()"
+              (mouseout)="isButtonHovered(false);"
+              (mouseover)="isButtonHovered(true);"
+              class="btn btn-square btn-outline"
+              tabindex="-1">
+        Reset R
+      </button>
+      <!--      <button class="btn btn-square btn-outline btn-primary"></button>-->
+    </div>
   </div>
 </app-layout>

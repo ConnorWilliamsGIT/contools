@@ -29,6 +29,10 @@ export class HomeComponent implements AfterViewInit {
   @ViewChild("canvas") canvas?: ElementRef;
   @ViewChild("canvasFrame") canvasFrame?: ElementRef;
   @ViewChild("image") image?: ElementRef;
+  @ViewChild("deleteButton") deleteButton?: ElementRef;
+  @ViewChild("resetButton") resetButton?: ElementRef;
+
+  buttonHovered: boolean = false;
   private ctx: any;
   private nodeRadius: number = 15;
   private nodeList: Node[] = [];
@@ -40,6 +44,17 @@ export class HomeComponent implements AfterViewInit {
   private drawingEdge: boolean = false;
   private tempEdgeSource: Node = new Node(0, 0);
   private tempEdgeEnd: Node = new Node(0, 0);
+  // enum for different editing modes
+  private Mode = {
+    DEFAULT: Symbol("default"),
+    DELETE: Symbol("delete"),
+    MOVE: Symbol("move")
+  };
+  private current_mode: symbol = this.Mode.DEFAULT;
+
+  isButtonHovered(hovered: boolean) {
+    this.buttonHovered = hovered;
+  }
 
   // Signals example
   // test = signal(2);
@@ -89,8 +104,8 @@ export class HomeComponent implements AfterViewInit {
 
   pageToCanvasPos(coord: coordinate): coordinate {
     return {
-      x: coord.x - this.canvas?.nativeElement.offsetLeft,
-      y: coord.y - this.canvas?.nativeElement.offsetTop
+      x: coord.x - this.canvasFrame?.nativeElement.offsetLeft,
+      y: coord.y - this.canvasFrame?.nativeElement.offsetTop
     }
   }
 
@@ -103,7 +118,6 @@ export class HomeComponent implements AfterViewInit {
   }
 
   getNodeDistance(node1: Node, node2: Node): number {
-    console.log(Math.sqrt(Math.pow(node1.x - node2.x, 2) + Math.pow(node1.y - node2.y, 2)));
     return Math.sqrt(Math.pow(node1.x - node2.x, 2) + Math.pow(node1.y - node2.y, 2));
   }
 
@@ -137,6 +151,13 @@ export class HomeComponent implements AfterViewInit {
 
   updateCanvas() {
     this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
+    if (this.current_mode === this.Mode.DELETE) {
+      this.ctx.fillStyle = "rgba(255, 0, 0, 0.1)";
+      // fill background red low opacity
+      this.ctx.fillRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
+
+    }
+
     this.graphList().forEach((graph) => this.drawGraph(graph));
     if (this.drawingEdge) {
       this.drawSelectNode(this.tempEdgeSource);
@@ -166,6 +187,37 @@ export class HomeComponent implements AfterViewInit {
     return {occupied: false, node: new Node(0, 0)};
   }
 
+  @HostListener('document:keypress', ['$event'])
+  handleKeyboardEvent(event: KeyboardEvent) {
+    let keyPressed = event.key;
+    if (keyPressed === "r") {
+      this.resetGraphs();
+    }
+    if (keyPressed === "x") {
+      this.toggleDeleteMode();
+    }
+  }
+
+  resetGraphs() {
+    this.nodeList = [];
+    this.graphList.set([]);
+    this.updateCanvas();
+    // reset button play clicked animation
+
+  }
+
+  toggleDeleteMode() {
+    if (this.current_mode === this.Mode.DELETE) {
+      this.current_mode = this.Mode.DEFAULT;
+      this.deleteButton?.nativeElement.classList.remove("btn-error");
+    } else {
+      this.current_mode = this.Mode.DELETE;
+      this.deleteButton?.nativeElement.classList.add("btn-error");
+    }
+    this.updateCanvas();
+  }
+
+
   @HostListener('mousemove', ['$event'])
   onMousemove(event: MouseEvent) {
     if (this.drawingEdge) {
@@ -179,32 +231,41 @@ export class HomeComponent implements AfterViewInit {
   @HostListener('click', ['$event'])
   onClick(event: MouseEvent) {
     const coordinate: coordinate = this.pageToCanvasPos({x: event.pageX, y: event.pageY});
-    if (coordinate.x < 0 || coordinate.y < 0 || coordinate.x > this.ctx.canvas.width || coordinate.y > this.ctx.canvas.height) {
+    if (coordinate.x < 0 || coordinate.y < 0 || coordinate.x > this.ctx.canvas.width || coordinate.y > this.ctx.canvas.height || this.buttonHovered) {
       this.drawingEdge = false;
       this.updateCanvas();
       return;
     }
     const nodeCheck = this.checkSpace(coordinate);
-    if (!nodeCheck.occupied && !this.drawingEdge) {                 // clicked on empty space, no edge drawing
-      this.nodeList.push(new Node(coordinate.x, coordinate.y));
-      this.graphList.update(arr => {
-        return [...arr, {nodes: [this.nodeList[this.nodeList.length - 1]]}]
-      });
-
-    } else if (nodeCheck.occupied && !this.drawingEdge) {           // clicked on node, no edge drawing
-      this.drawingEdge = true;
-      this.tempEdgeSource = nodeCheck.node;
-      this.tempEdgeEnd.setCoordinate(coordinate);
-    } else if (nodeCheck.occupied && this.drawingEdge) {            // clicked on node, while edge drawing
-      this.drawingEdge = false;
-      if (nodeCheck.node != this.tempEdgeSource && !this.tempEdgeSource.isAdjacent(nodeCheck.node)) {
-        // Node edge successfully created
-        this.tempEdgeSource.addAdjacentNode(nodeCheck.node);
-        nodeCheck.node.addAdjacentNode(this.tempEdgeSource);
+    if (this.current_mode === this.Mode.DELETE) {
+      if (nodeCheck.occupied) {
+        this.nodeList = this.nodeList.filter((node) => node !== nodeCheck.node);
+        // remove each occurrence of node from adjacent nodes
+        this.nodeList.forEach((node) => node.removeAdjacentNode(nodeCheck.node));
         this.createGraphs();
       }
-    } else if (!nodeCheck.occupied && this.drawingEdge) {           // clicked on empty space, while edge drawing
-      this.drawingEdge = false;
+    } else {
+      if (!nodeCheck.occupied && !this.drawingEdge) {                 // clicked on empty space, no edge drawing
+        this.nodeList.push(new Node(coordinate.x, coordinate.y));
+        this.graphList.update(arr => {
+          return [...arr, {nodes: [this.nodeList[this.nodeList.length - 1]]}]
+        });
+
+      } else if (nodeCheck.occupied && !this.drawingEdge) {           // clicked on node, no edge drawing
+        this.drawingEdge = true;
+        this.tempEdgeSource = nodeCheck.node;
+        this.tempEdgeEnd.setCoordinate(coordinate);
+      } else if (nodeCheck.occupied && this.drawingEdge) {            // clicked on node, while edge drawing
+        this.drawingEdge = false;
+        if (nodeCheck.node != this.tempEdgeSource && !this.tempEdgeSource.isAdjacent(nodeCheck.node)) {
+          // Node edge successfully created
+          this.tempEdgeSource.addAdjacentNode(nodeCheck.node);
+          nodeCheck.node.addAdjacentNode(this.tempEdgeSource);
+          this.createGraphs();
+        }
+      } else if (!nodeCheck.occupied && this.drawingEdge) {           // clicked on empty space, while edge drawing
+        this.drawingEdge = false;
+      }
     }
     this.updateCanvas();
   }
