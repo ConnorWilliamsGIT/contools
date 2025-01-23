@@ -44,13 +44,20 @@ export class HomeComponent implements AfterViewInit {
   private drawingEdge: boolean = false;
   private tempEdgeSource: Node = new Node(0, 0);
   private tempEdgeEnd: Node = new Node(0, 0);
+
+  private selectorThickness = this.nodeRadius * 0.2;
+  private selectorOuterRadius = this.nodeRadius * 1.4;
+
   // enum for different editing modes
   private Mode = {
     DEFAULT: Symbol("default"),
     DELETE: Symbol("delete"),
     MOVE: Symbol("move")
   };
-  private current_mode: symbol = this.Mode.DEFAULT;
+  private currentMode: symbol = this.Mode.DEFAULT;
+  private shiftEnabled: boolean = false;
+
+  private mousePos: coordinate = {x: 0, y: 0};
 
   isButtonHovered(hovered: boolean) {
     this.buttonHovered = hovered;
@@ -121,21 +128,61 @@ export class HomeComponent implements AfterViewInit {
     return Math.sqrt(Math.pow(node1.x - node2.x, 2) + Math.pow(node1.y - node2.y, 2));
   }
 
-  drawSelectNode(node: Node) {
-    // calculate angle at which the tempEdgeEnd is from the node
+  selectNodeEdgeDrawing(node: Node) {
     let gap = 0.4 * Math.PI
-    let thickness = this.nodeRadius * 0.2;
-    let outerRadius = this.nodeRadius * 1.4;
+
     const angle = Math.atan2(this.tempEdgeEnd.y - node.y, this.tempEdgeEnd.x - node.x);
-    if (this.getNodeDistance(node, this.tempEdgeEnd) < outerRadius) {
+    if (this.getNodeDistance(node, this.tempEdgeEnd) < this.selectorOuterRadius) {
       gap = 0;
     }
     let angle_offset = angle + gap / 2;
+    this.drawSelectArc(node, "lightblue", gap, angle_offset);
+  }
+
+  selectNodeDelete() {
+    this.updateCanvas();
+    const coordinate: coordinate = this.pageToCanvasPos({x: this.mousePos.x, y: this.mousePos.y});
+    const nodeCheck = this.checkSpace(coordinate);
+
+    if (nodeCheck.occupied) {
+      let gap = 0;
+      const angle = 0;
+
+      this.drawSelectArc(nodeCheck.node, "rgba(255,0,0,0.5)", gap, angle);
+
+      if (this.shiftEnabled) {
+        // select node delete all nodes in same graph
+        const graph = this.graphList().find((graph) => graph.nodes.includes(nodeCheck.node));
+        if (graph !== undefined) {
+          graph.nodes.forEach((node) => this.drawSelectArc(node, "rgba(255,0,0,0.5)", gap, angle));
+        }
+      }
+    }
+  }
+
+  deleteNode(node: Node) {
+    this.nodeList = this.nodeList.filter((n) => n !== node);
+    // remove node from all adjacent nodes adjacency list
+    this.nodeList.forEach((n) => n.removeAdjacentNode(node));
+    this.graphList.update(arr => {
+      return arr.map((g) => {
+        g.nodes = g.nodes.filter((n) => n !== node);
+        return g;
+      });
+    });
+  }
+
+  deleteGraph(graph: graph) {
+    this.nodeList = this.nodeList.filter((n) => !graph.nodes.includes(n));
+    this.createGraphs();
+  }
+
+  drawSelectArc(node: Node, colour: string = "lightblue", gap: number = 0, angleOffset: number = 0) {
     this.ctx.beginPath();
-    this.ctx.arc(node.x, node.y, outerRadius, angle_offset, 2 * Math.PI - gap + angle_offset, false);
-    this.ctx.arc(node.x, node.y, outerRadius - thickness, 2 * Math.PI - gap + angle_offset, angle_offset, true);
+    this.ctx.arc(node.x, node.y, this.selectorOuterRadius, angleOffset, 2 * Math.PI - gap + angleOffset, false);
+    this.ctx.arc(node.x, node.y, this.selectorOuterRadius - this.selectorThickness, 2 * Math.PI - gap + angleOffset, angleOffset, true);
     this.ctx.closePath();
-    this.ctx.fillStyle = "lightblue";
+    this.ctx.fillStyle = colour;
     this.ctx.fill();
   }
 
@@ -151,7 +198,7 @@ export class HomeComponent implements AfterViewInit {
 
   updateCanvas() {
     this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
-    if (this.current_mode === this.Mode.DELETE) {
+    if (this.currentMode === this.Mode.DELETE) {
       this.ctx.fillStyle = "rgba(255, 0, 0, 0.1)";
       // fill background red low opacity
       this.ctx.fillRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
@@ -160,7 +207,7 @@ export class HomeComponent implements AfterViewInit {
 
     this.graphList().forEach((graph) => this.drawGraph(graph));
     if (this.drawingEdge) {
-      this.drawSelectNode(this.tempEdgeSource);
+      this.selectNodeEdgeDrawing(this.tempEdgeSource);
     }
   }
 
@@ -187,7 +234,29 @@ export class HomeComponent implements AfterViewInit {
     return {occupied: false, node: new Node(0, 0)};
   }
 
-  @HostListener('document:keypress', ['$event'])
+
+  @HostListener('document:keydown', ['$event'])
+  handleKeyDown(event: KeyboardEvent) {
+    if (event.key === 'Shift') {
+      this.shiftEnabled = true;
+      if (this.currentMode === this.Mode.DELETE) {
+        this.selectNodeDelete();
+      }
+    }
+    this.handleKeyboardEvent(event);
+  }
+
+  @HostListener('document:keyup', ['$event'])
+  handleKeyUp(event: KeyboardEvent) {
+    if (event.key === 'Shift') {
+      this.shiftEnabled = false;
+      if (this.currentMode === this.Mode.DELETE) {
+        this.selectNodeDelete();
+      }
+    }
+  }
+
+  // @HostListener('document:keypress', ['$event'])
   handleKeyboardEvent(event: KeyboardEvent) {
     let keyPressed = event.key;
     if (keyPressed === "r") {
@@ -207,33 +276,37 @@ export class HomeComponent implements AfterViewInit {
   }
 
   toggleDeleteMode() {
-    if (this.current_mode === this.Mode.DELETE) {
-      this.current_mode = this.Mode.DEFAULT;
+    if (this.currentMode === this.Mode.DELETE) {
+      this.currentMode = this.Mode.DEFAULT;
       this.deleteButton?.nativeElement.classList.remove("btn-error");
       this.deleteButton?.nativeElement.classList.add("opacity-50");
-      this.deleteButton?.nativeElement.classList.remove("opacity-100");
+      this.updateCanvas();
     } else {
-      this.current_mode = this.Mode.DELETE;
+      this.currentMode = this.Mode.DELETE;
       this.deleteButton?.nativeElement.classList.add("btn-error");
       this.deleteButton?.nativeElement.classList.remove("opacity-50");
-      this.deleteButton?.nativeElement.classList.add("opacity-100");
+      this.updateCanvas();
+      this.selectNodeDelete();
     }
-    this.updateCanvas();
   }
 
 
   @HostListener('mousemove', ['$event'])
-  onMousemove(event: MouseEvent) {
+  onMouseMove(event: MouseEvent) { // On mouse move
+    this.mousePos = {x: event.pageX, y: event.pageY};
+    if (this.currentMode === this.Mode.DELETE) {
+      this.selectNodeDelete();
+    }
     if (this.drawingEdge) {
       this.updateCanvas();
-      this.tempEdgeEnd.setCoordinate(this.pageToCanvasPos({x: event.pageX, y: event.pageY}));
+      this.tempEdgeEnd.setCoordinate(this.pageToCanvasPos({x: this.mousePos.x, y: this.mousePos.y}));
       this.drawEdge(this.tempEdgeSource, this.tempEdgeEnd);
     }
   }
 
   // add click listener
   @HostListener('click', ['$event'])
-  onClick(event: MouseEvent) {
+  onClick(event: MouseEvent) { // On click
     const coordinate: coordinate = this.pageToCanvasPos({x: event.pageX, y: event.pageY});
     if (coordinate.x < 0 || coordinate.y < 0 || coordinate.x > this.ctx.canvas.width || coordinate.y > this.ctx.canvas.height || this.buttonHovered) {
       this.drawingEdge = false;
@@ -241,11 +314,18 @@ export class HomeComponent implements AfterViewInit {
       return;
     }
     const nodeCheck = this.checkSpace(coordinate);
-    if (this.current_mode === this.Mode.DELETE) {
+    if (this.currentMode === this.Mode.DELETE) {
       if (nodeCheck.occupied) {
-        this.nodeList = this.nodeList.filter((node) => node !== nodeCheck.node);
-        // remove each occurrence of node from adjacent nodes
-        this.nodeList.forEach((node) => node.removeAdjacentNode(nodeCheck.node));
+        if (this.shiftEnabled) {
+          // delete all nodes in same graph
+          const graph = this.graphList().find((graph) => graph.nodes.includes(nodeCheck.node));
+          if (graph !== undefined) {
+            this.deleteGraph(graph);
+          }
+        } else {
+          this.deleteNode(nodeCheck.node);
+        }
+
         this.createGraphs();
       }
     } else {
