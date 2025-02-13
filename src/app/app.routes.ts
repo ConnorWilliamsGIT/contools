@@ -20,5 +20,12 @@ export const routes: Routes = [
       pageName: 'Boids'
     }
   },
+  {
+    path: 'forge',
+    loadComponent: () => import('./pages/forge/forge.component').then(m => m.ForgeComponent),
+    data: {
+      pageName: 'Forge'
+    }
+  },
 
 ];
