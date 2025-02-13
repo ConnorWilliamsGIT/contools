@@ -1,9 +1,9 @@
 import {
   AfterViewInit,
   Component,
-  computed,
+  computed, effect,
   ElementRef,
-  HostListener,
+  HostListener, Signal,
   signal,
   ViewChild,
   WritableSignal
@@ -35,8 +35,11 @@ export class HomeComponent implements AfterViewInit {
   buttonHovered: boolean = false;
   private ctx: any;
   private nodeRadius: number = 15;
-  private nodeList: Node[] = [];
+  private nodeList: WritableSignal<Node[]> = signal([]);
+
   private graphList: WritableSignal<graph[]> = signal([]);
+
+
   graphString = computed(() => {
     console.log('updated graph string')
     return this.graphsToString(this.graphList());
@@ -70,17 +73,39 @@ export class HomeComponent implements AfterViewInit {
   //   return this.test() === 2
   // });
 
+  // constructor
+  // todo: add local storage
+  // constructor() {
+  //   const nodeList = localStorage.getItem('nodeList');
+  //   console.log(nodeList);
+  //   this.nodeList.set(nodeList !== null ? JSON.parse(nodeList) : []);
+  //   effect(() => {
+  //     console.log('updated')
+  //     localStorage.setItem('nodeList', JSON.stringify(this.nodeList()));
+  //   });
+  // }
+
+
   ngAfterViewInit(): void {
     if (this.canvas === undefined || this.canvasFrame === undefined) {
       console.log("Canvas not found");
       return;
     }
 
+    // todo add regularly updating spinners
+    // example of code running continuously
+    // const p = setInterval(() => {
+    //   console.log('updated')
+    // }, 1000)
+    // setTimeout(() => clearInterval(p), 5000);
+
     this.ctx = this.canvas.nativeElement.getContext("2d");
 
     this.resizeCanvas()
     // this.renderImage()
   }
+
+
 
   @HostListener('window:resize')
   resizeCanvas() {
@@ -161,9 +186,11 @@ export class HomeComponent implements AfterViewInit {
   }
 
   deleteNode(node: Node) {
-    this.nodeList = this.nodeList.filter((n) => n !== node);
+    this.nodeList.update((arr) => {
+       return arr.filter((n) => n !== node);
+    });
     // remove node from all adjacent nodes adjacency list
-    this.nodeList.forEach((n) => n.removeAdjacentNode(node));
+    this.nodeList().forEach((n) => n.removeAdjacentNode(node));
     this.graphList.update(arr => {
       return arr.map((g) => {
         g.nodes = g.nodes.filter((n) => n !== node);
@@ -173,7 +200,9 @@ export class HomeComponent implements AfterViewInit {
   }
 
   deleteGraph(graph: graph) {
-    this.nodeList = this.nodeList.filter((n) => !graph.nodes.includes(n));
+    this.nodeList.update((arr) => {
+      return arr.filter((n) => !graph.nodes.includes(n));
+    });
     this.createGraphs();
   }
 
@@ -235,6 +264,7 @@ export class HomeComponent implements AfterViewInit {
   }
 
 
+
   @HostListener('document:keydown', ['$event'])
   handleKeyDown(event: KeyboardEvent) {
     if (event.key === 'Shift') {
@@ -268,7 +298,7 @@ export class HomeComponent implements AfterViewInit {
   }
 
   resetGraphs() {
-    this.nodeList = [];
+    this.nodeList.set([]);
     this.graphList.set([]);
     this.updateCanvas();
     // reset button play clicked animation
@@ -330,9 +360,12 @@ export class HomeComponent implements AfterViewInit {
       }
     } else {
       if (!nodeCheck.occupied && !this.drawingEdge) {                 // clicked on empty space, no edge drawing
-        this.nodeList.push(new Node(coordinate.x, coordinate.y));
+
+        this.nodeList.update(arr => {
+          return [...arr, new Node(coordinate.x, coordinate.y)];
+        });
         this.graphList.update(arr => {
-          return [...arr, {nodes: [this.nodeList[this.nodeList.length - 1]]}]
+          return [...arr, {nodes: [this.nodeList()[this.nodeList().length - 1]]}]
         });
 
       } else if (nodeCheck.occupied && !this.drawingEdge) {           // clicked on node, no edge drawing
@@ -355,11 +388,11 @@ export class HomeComponent implements AfterViewInit {
   }
 
   createGraphs() {
-    this.nodeList.forEach((node) => node.visited = false);
+    this.nodeList().forEach((node) => node.visited = false);
     this.graphList.set([]);
 
-    for (let i = 0; i < this.nodeList.length; i++) {
-      const node = this.nodeList[i];
+    for (let i = 0; i < this.nodeList().length; i++) {
+      const node = this.nodeList()[i];
       if (!node.visited) {
         const graph = {nodes: []};
         this.graphList().push(graph);
