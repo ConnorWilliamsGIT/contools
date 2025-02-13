@@ -1,8 +1,8 @@
 <div class="flex min-h-screen">
-  <div class="flex flex-col w-1/4 shadow-lg z-0 shadow-base-content/30">
+  <div class="flex flex-col w-1/4 shadow-lg z-0 shadow-base-content/30 max-h-svh">
     <app-navbar/>
 
-    <div class="font-bold text-white bg-base-100 flex-1 p-3">
+    <div class="font-bold text-white bg-base-100 flex-1 p-3 overflow-y-auto">
       <ng-content select="[settings]"/>
     </div>
   </div>
