@@ -4,7 +4,7 @@
 
     <button class="btn btn-primary grow-0" (click)="pasteImage()">Paste Image from clipboard</button>
 
-    <div *ngIf="!imageUrl">
+    <div *ngIf="imageUrl == ''">
       <p class="text-neutral-content">
         Note: Anvil image should look something like this.<br>
         Don't include the UI border or anything else in the screenshot.
@@ -12,15 +12,25 @@
       <img [src]="exampleImg" alt="Example Image"/>
     </div>
 
-    <div *ngIf="imageUrl" class="flex w-[90%] items-start mt-10 gap-3 max-h-[700px]">
+    <div *ngIf="imageUrl != ''" class="flex w-[90%] items-start mt-10 gap-3 max-h-[700px]">
       <div class="outline outline-base-content/50 rounded rounded-4 grid flex-none">
         <img [src]="imageUrl" alt="Pasted Image"/>
       </div>
       <div class="inline-block h-auto min-h-[1em] w-0.5 self-stretch bg-base dark:bg-white/10"></div>
       <div class="flex-1 max-h-[700px] overflow-y-auto">
         <p class="text-neutral-content whitespace-normal">
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam nec purus nec nunc
+          Steps: {{forgeText().length}}<br>
+          Moves:
         </p>
+        <div class="flex gap-1 items-center justify-center mt-5 flex-wrap">
+          @for(step of forgeText();track $index; let last = $last){
+            <img class="w-10" src="assets/img/{{step}}.png" alt="Pasted Image"/>
+            @if(!last){
+              →
+            }
+          }
+        </div>
+
       </div>
     </div>
   </div>
