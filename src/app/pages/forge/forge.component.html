@@ -1,0 +1,27 @@
+<div class="text-center content-center justify-center h-svh max-h-svh items-center flex flex-col">
+    <h1 class="text-3xl flex-none font-bold p-3 text-center w-100 text-secondary">Contools</h1>
+  <div class="text-center content-center justify-center items-center flex-1 flex flex-col w-[100%]">
+
+    <button class="btn btn-primary grow-0" (click)="pasteImage()">Paste Image from clipboard</button>
+
+    <div *ngIf="!imageUrl">
+      <p class="text-neutral-content">
+        Note: Anvil image should look something like this.<br>
+        Don't include the UI border or anything else in the screenshot.
+      </p>
+      <img [src]="exampleImg" alt="Example Image"/>
+    </div>
+
+    <div *ngIf="imageUrl" class="flex w-[90%] items-start mt-10 gap-3 max-h-[700px]">
+      <div class="outline outline-base-content/50 rounded rounded-4 grid flex-none">
+        <img [src]="imageUrl" alt="Pasted Image"/>
+      </div>
+      <div class="inline-block h-auto min-h-[1em] w-0.5 self-stretch bg-base dark:bg-white/10"></div>
+      <div class="flex-1 max-h-[700px] overflow-y-auto">
+        <p class="text-neutral-content whitespace-normal">
+          Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam nec purus nec nunc
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
