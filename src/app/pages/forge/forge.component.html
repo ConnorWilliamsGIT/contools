@@ -35,3 +35,15 @@
     </div>
   </div>
 </div>
+
+<button id="modal_button" class="btn hidden" onclick="error_modal.showModal()">open modal</button>
+<dialog id="error_modal" class="modal">
+  <div class="modal-box">
+    <h3 class="text-lg font-bold">An error has occurred.</h3>
+    <p class="py-4">Click anywhere to continue. <br>
+      If the error persists, close and reopen the page.</p>
+  </div>
+  <form method="dialog" class="modal-backdrop">
+    <button>close</button>
+  </form>
+</dialog>

@@ -12,6 +12,8 @@ import {NgIf, NgOptimizedImage} from "@angular/common";
   styleUrl: './forge.component.scss'
 })
 export class ForgeComponent{
+  // get modal from id
+  private modalButton = document.getElementById("modal_button");
   protected imageUrl: string = "";
   protected exampleImg: string = '../../../assets/img/exampleForge.png';
 
@@ -21,6 +23,10 @@ export class ForgeComponent{
 
 
   constructor() {}
+
+  ngOnInit() {
+    this.modalButton = document.getElementById("modal_button");
+  }
 
   async pasteImage() {
     const clipboardContents = await navigator.clipboard.read();
@@ -32,100 +38,123 @@ export class ForgeComponent{
       const imageObject = await item.getType("image/png");
 
       this.imageUrl = URL.createObjectURL(imageObject);
+      console.log("got here 1");
       this.processImage();
     }
   }
 
   processImage() {
-    let canvas = document.createElement('canvas');
-    let ctx = canvas.getContext('2d');
+    try {
+      let canvas = document.createElement('canvas');
+      let ctx = canvas.getContext('2d');
 
-    const img = new Image();
-
-    img.onload = () => {
-      if (ctx === null) {
-        console.log("Context is null");
-        return;
-      }
+      const img = new Image();
 
 
-      canvas.width = img.width; canvas.height = img.height;
-      ctx.drawImage(img, 0, 0, canvas.width,canvas.height);
-      let imgData = ctx.getImageData(0, 0, img.width, img.height);
+      img.onload = () => {
+        if (ctx === null) {
+          console.log("Context is null");
+          return;
+        }
 
 
-      let count = 0;
-      let aFound = false;
-      let aRow = 0;
-      let aCol = 0;
+        canvas.width = img.width;
+        canvas.height = img.height;
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        let imgData = ctx.getImageData(0, 0, img.width, img.height);
 
-      for (let row = 0; row < img.height; row++) {
-        for (let col = 0; col < img.width; col++) {
-          let pixel = this.getPixel(imgData, row * img.width + col);
-          if (pixel[0] == 63 && pixel[1] == 63 && pixel[2] == 63) {
-            count += 1;
 
-            if (!aFound) {
-              aFound = true;
-              aRow = row;
-              aCol = col;
+        let count = 0;
+        let aFound = false;
+        let aRow = 0;
+        let aCol = 0;
+
+        for (let row = 0; row < img.height; row++) {
+          for (let col = 0; col < img.width; col++) {
+            let pixel = this.getPixel(imgData, row * img.width + col);
+            if (pixel[0] == 63 && pixel[1] == 63 && pixel[2] == 63) {
+              count += 1;
+
+              if (!aFound) {
+                aFound = true;
+                aRow = row;
+                aCol = col;
+              }
+            } else if (aFound) {
+              break;
             }
-          } else if (aFound) {
+          }
+          if (aFound) {
             break;
           }
         }
-        if (aFound) {
-          break;
+        if (!aFound) {
+          console.log("A not found");
+          throw new Error("A not found");
         }
+
+        console.log("count: " + count);
+        let pixelWidth = count / 3;
+        aCol -= pixelWidth;
+
+        console.log("aRow: " + aRow);
+        console.log("aCol: " + aCol);
+
+
+        let greenFound = false;
+        let greenCol = 0;
+
+        let redFound = false;
+        let redCol = 0;
+
+        let rowCheck = 96;
+        for (let col = 0; col < img.width; col++) {
+          let pixel = this.getPixel(imgData, (rowCheck * pixelWidth + aRow) * img.width + col);
+          if (pixel[0] == 0 && pixel[1] == 255 && pixel[2] == 6) {
+            greenCol = col;
+            break;
+          }
+        }
+
+        rowCheck = 90;
+        for (let col = 0; col < img.width; col++) {
+          let pixel = this.getPixel(imgData, (rowCheck * pixelWidth + aRow) * img.width + col);
+          if (pixel[0] == 255 && pixel[1] == 0 && pixel[2] == 0) {
+            redCol = col;
+            break;
+          }
+        }
+
+        console.log("greenCol: " + greenCol);
+        console.log("redCol: " + redCol);
+
+        let distance = (redCol - greenCol) / pixelWidth;
+        console.log("distance: " + distance);
+
+        if (isNaN(distance)){
+          console.log("Distance is NaN");
+          throw new Error("Distance is NaN");
+        }
+
+        let [steps, moves] = this.minStepsToN(distance);
+        this.forgeText.set(moves.map((move) => move.toString()));
+
+
+        ctx.putImageData(imgData, 0, 0);  // 0,0 is xy coordinates
+
+        console.log("updated image");
+        this.imageUrl = canvas.toDataURL();
       }
 
-      console.log("count: " + count);
-      let pixelWidth = count/3;
-      aCol -= pixelWidth;
+      img.src = this.imageUrl;
 
-      console.log("aRow: " + aRow);
-      console.log("aCol: " + aCol);
-
-
-      let greenFound = false;
-      let greenCol = 0;
-
-      let redFound = false;
-      let redCol = 0;
-
-      let rowCheck = 96;
-      for (let col = 0; col < img.width; col++) {
-        let pixel = this.getPixel(imgData, (rowCheck*pixelWidth + aRow) * img.width + col);
-        if (pixel[0] == 0 && pixel[1] == 255 && pixel[2] == 6) {
-          rowCheck = 90;
-          greenCol = col;
-        }
-
-        if (pixel[0] == 255 && pixel[1] == 0 && pixel[2] == 0) {
-          redCol = col;
-          break;
-        }
-      }
-
-      console.log("greenCol: " + greenCol);
-      console.log("redCol: " + redCol);
-
-      let distance = (redCol - greenCol)/pixelWidth;
-      console.log("distance: " + distance);
-
-      let [steps, moves] = this.minStepsToN(distance);
-      this.forgeText.set(moves.map((move) => move.toString()));
-
-
-      ctx.putImageData(imgData, 0,0);  // 0,0 is xy coordinates
-
-      console.log("updated image");
-      this.imageUrl = canvas.toDataURL();
+      return;
+    } catch (e) {
+      console.log(e);
+      console.log("Error processing image");
+      this.toggleModal();
+      this.imageUrl = "";
     }
-
-    img.src = this.imageUrl;
-
-    return;
   }
 
   getPixel(imgData : ImageData, index : number) {
@@ -136,10 +165,19 @@ export class ForgeComponent{
     imgData.data.set(pixelData, index*4);
   }
 
+  toggleModal() {
+    if (this.modalButton) {
+      this.modalButton.click();
+      console.log("modalButton toggled");
+    } else {
+      console.log("modalButton not found");
+    }
+  }
+
   minStepsToN(n: number): [number, number[]] {
     const moves = [-15, -9, -6, -3, 2, 7, 13, 16];
     const maxLimit = 150;
-
+    n = Math.abs(Math.round(n));
     type State = { sum: number, steps: number, path: number[] };
     const queue: State[] = [{ sum: 0, steps: 0, path: [] }];
     const visited = new Set<number>([0]);
