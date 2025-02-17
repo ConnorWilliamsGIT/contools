@@ -71,7 +71,7 @@ export class ForgeComponent implements OnInit {
 
         for (let row = 0; row < img.height; row++) {
           for (let col = 0; col < img.width; col++) {
-            console.log("Row: " + row + " Col: " + col);
+            // console.log("Row: " + row + " Col: " + col);
             let pixel = this.getPixel(imgData, row * img.width + col);
             // Colour of the A in the anvil
             if (pixel[0] == 63 && pixel[1] == 63 && pixel[2] == 63) {
