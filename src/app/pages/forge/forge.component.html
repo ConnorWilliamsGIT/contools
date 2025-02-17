@@ -36,8 +36,8 @@
   </div>
 </div>
 
-<button id="modal_button" class="btn hidden" onclick="error_modal.showModal()">open modal</button>
-<dialog id="error_modal" class="modal">
+<!--<button id="modal_button" class="btn hidden" (click)="errorModal.showModal()">open modal</button>-->
+<dialog #errorModal class="modal">
   <div class="modal-box">
     <h3 class="text-lg font-bold">An error has occurred.</h3>
     <p class="py-4">Click anywhere to continue. <br>
