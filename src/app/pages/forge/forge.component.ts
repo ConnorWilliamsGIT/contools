@@ -1,4 +1,4 @@
-import {AfterViewInit, Component, computed, ElementRef, HostListener, signal, ViewChild} from '@angular/core';
+import {AfterViewInit, Component, computed, ElementRef, HostListener, OnInit, signal, ViewChild} from '@angular/core';
 import {NgIf, NgOptimizedImage} from "@angular/common";
 
 @Component({
@@ -11,11 +11,12 @@ import {NgIf, NgOptimizedImage} from "@angular/common";
   templateUrl: './forge.component.html',
   styleUrl: './forge.component.scss'
 })
-export class ForgeComponent{
+export class ForgeComponent implements OnInit {
+  @ViewChild('errorModal') errorModal!: ElementRef<HTMLDialogElement>;
   // get modal from id
   private modalButton = document.getElementById("modal_button");
   protected imageUrl: string = "";
-  protected exampleImg: string = '../../../assets/img/exampleForge.png';
+  protected exampleImg: string = '/assets/img/exampleForge.png';
 
   forgeText = signal<string[]>([]);
 
@@ -36,9 +37,7 @@ export class ForgeComponent{
         continue;
       }
       const imageObject = await item.getType("image/png");
-
       this.imageUrl = URL.createObjectURL(imageObject);
-
       this.processImage();
     }
   }
@@ -96,10 +95,8 @@ export class ForgeComponent{
         let pixelWidth = count / 3;
         aCol -= pixelWidth;
 
-        let greenFound = false;
         let greenCol = 0;
 
-        let redFound = false;
         let redCol = 0;
 
         let rowCheck = 96; // 96 is the number of minecraft pixels from the top of the A in anvil to the green pixel row
@@ -295,34 +292,45 @@ export class ForgeComponent{
         let originalDistance = distance;
         let lastMoves = [0, 0, 0];
 
-        if (forgeGuide[0][2] == 1) {
-          if (forgeIcons[0] == -1) {
-            let bestOption0 = this.findBestOption(distance, 0, 0, forgeGuide, forgeIcons);
-            distance -= bestOption0;
-            lastMoves[0] = bestOption0;
-          } else {
-            distance -= forgeIcons[0];
-            lastMoves[0] = forgeIcons[0];
-          }
-          if (forgeGuide[1][1] == 1 && forgeIcons[1] == -1) {
-            let bestOption1 = this.findBestOption(distance, 1, 1, forgeGuide, forgeIcons);
-            distance -= bestOption1;
-            lastMoves[1] = bestOption1;
-          } else {
-            distance -= forgeIcons[1];
-            lastMoves[1] = forgeIcons[1];
-          }
-          if (forgeGuide[2][0] == 1 && forgeIcons[2] == -1) {
-            let bestOption2 = this.findBestOption(distance, 2, 2, forgeGuide, forgeIcons);
-            distance -= bestOption2;
-            lastMoves[2] = bestOption2;
-          } else {
-            distance -= forgeIcons[2];
-            lastMoves[2] = forgeIcons[2];
+        let forgeGuideOrder = [0,1,2];
+
+        for (let i = 0; i < 3; i++) {
+          if (forgeGuide[i][2] == 1 && forgeGuide[i][1] == 0 && forgeGuide[i][0] == 0) {
+            // first position is i, second is the lowest of the remaining two and third is the highest
+            forgeGuideOrder = [i, ...forgeGuideOrder.filter((_, index) => index !== i)];
+            break;
           }
         }
 
-        let [steps, moves] = this.minStepsToN(distance);
+
+        if (forgeGuide[forgeGuideOrder[0]][2] == 1) {
+          if (forgeIcons[forgeGuideOrder[0]] == -1) {
+            let bestOption0 = this.findBestOption(distance);
+            distance -= bestOption0;
+            lastMoves[0] = bestOption0;
+          } else {
+            distance -= forgeIcons[forgeGuideOrder[0]];
+            lastMoves[0] = forgeIcons[forgeGuideOrder[0]];
+          }
+          if (forgeGuide[forgeGuideOrder[1]][1] == 1 && forgeIcons[forgeGuideOrder[1]] == -1) {
+            let bestOption1 = this.findBestOption(distance);
+            distance -= bestOption1;
+            lastMoves[1] = bestOption1;
+          } else {
+            distance -= forgeIcons[forgeGuideOrder[1]];
+            lastMoves[1] = forgeIcons[forgeGuideOrder[1]];
+          }
+          if (forgeGuide[forgeGuideOrder[2]][0] == 1 && forgeIcons[forgeGuideOrder[2]] == -1) {
+            let bestOption2 = this.findBestOption(distance);
+            distance -= bestOption2;
+            lastMoves[2] = bestOption2;
+          } else {
+            distance -= forgeIcons[forgeGuideOrder[2]];
+            lastMoves[2] = forgeIcons[forgeGuideOrder[2]];
+          }
+        }
+
+        let [_, moves] = this.minStepsToN(distance);
 
         lastMoves = lastMoves.filter((move) => move !== 0);
         moves.push(...lastMoves.reverse());
@@ -349,7 +357,7 @@ export class ForgeComponent{
     } catch (e) {
       console.log(e);
       console.log("Error processing image");
-      this.toggleModal();
+      this.errorModal.nativeElement.showModal();
       this.imageUrl = "";
     }
   }
@@ -378,16 +386,7 @@ export class ForgeComponent{
     imgData.data.set(pixelData, index*4);
   }
 
-  toggleModal() {
-    if (this.modalButton) {
-      this.modalButton.click();
-      console.log("modalButton toggled");
-    } else {
-      console.log("modalButton not found");
-    }
-  }
-
-  findBestOption(startDistance: number, guideIndex: number, iconIndex: number, forgeGuide: number[][], forgeIcons: number[]): number {
+  findBestOption(startDistance: number): number {
     let bestOption = 0;
     let bestSteps = 1000;
     const forgeOptions = [-3, -6, -9];
