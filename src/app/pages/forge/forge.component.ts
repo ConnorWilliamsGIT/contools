@@ -59,6 +59,8 @@ export class ForgeComponent implements OnInit {
 
         canvas.width = img.width;
         canvas.height = img.height;
+        console.log("Image width: " + img.width);
+        console.log("Image height: " + img.height);
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
         let imgData = ctx.getImageData(0, 0, img.width, img.height);
 
@@ -69,6 +71,7 @@ export class ForgeComponent implements OnInit {
 
         for (let row = 0; row < img.height; row++) {
           for (let col = 0; col < img.width; col++) {
+            console.log("Row: " + row + " Col: " + col);
             let pixel = this.getPixel(imgData, row * img.width + col);
             // Colour of the A in the anvil
             if (pixel[0] == 63 && pixel[1] == 63 && pixel[2] == 63) {
