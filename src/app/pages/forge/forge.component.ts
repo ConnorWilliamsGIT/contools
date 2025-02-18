@@ -297,10 +297,16 @@ export class ForgeComponent implements OnInit {
 
         let forgeGuideOrder = [0,1,2];
 
+
+
+
         for (let i = 0; i < 3; i++) {
           if (forgeGuide[i][2] == 1 && forgeGuide[i][1] == 0 && forgeGuide[i][0] == 0) {
-            // first position is i, second is the lowest of the remaining two and third is the highest
             forgeGuideOrder = [i, ...forgeGuideOrder.filter((_, index) => index !== i)];
+            break;
+          }
+          if (forgeGuide[i][2] == 0 && forgeGuide[i][1] == 1 && forgeGuide[i][0] == 1) {
+            forgeGuideOrder = [...forgeGuideOrder.filter((_, index) => index !== i), i];
             break;
           }
         }
