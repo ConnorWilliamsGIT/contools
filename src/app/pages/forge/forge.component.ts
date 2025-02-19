@@ -352,6 +352,10 @@ export class ForgeComponent implements OnInit {
         let validationCheck = sum == originalDistance;
 
         console.log("validation check: " + validationCheck);
+        if (!validationCheck) {
+          console.log("Validation check failed");
+          throw new Error("Validation check failed");
+        }
         this.forgeText.set(moves.map((move) => move.toString()));
 
 
