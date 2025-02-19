@@ -311,7 +311,6 @@ export class ForgeComponent implements OnInit {
           }
         }
 
-
         if (forgeGuide[forgeGuideOrder[0]][2] == 1) {
           if (forgeIcons[forgeGuideOrder[0]] == -1) {
             let bestOption0 = this.findBestOption(distance);
@@ -401,7 +400,7 @@ export class ForgeComponent implements OnInit {
     const forgeOptions = [-3, -6, -9];
 
     for (let i = 0; i < 3; i++) {
-      let testDistance = startDistance + forgeOptions[i];
+      let testDistance = startDistance - forgeOptions[i];
       let [steps,_] = this.minStepsToN(testDistance);
       if (steps < bestSteps) {
         bestOption = forgeOptions[i];
