@@ -287,9 +287,10 @@ export class ForgeComponent implements OnInit {
           let first = this.getPixel(imgData, (aRow + 17*pixelWidth) * img.width + aCol + 52 * pixelWidth + i*19*pixelWidth);
           let second = this.getPixel(imgData, (aRow + 19*pixelWidth) * img.width + aCol + 52 * pixelWidth + i*19*pixelWidth);
           let last = this.getPixel(imgData,(aRow + 21*pixelWidth) * img.width + aCol + 52 * pixelWidth + i*19*pixelWidth);
-          forgeGuide[i][0] = first[0] == 216 && first[1] == 86 && first[2] == 0 ? 1 : 0;
-          forgeGuide[i][1] = second[0] == 216 && second[1] == 86 && second[2] == 0 ? 1 : 0;
-          forgeGuide[i][2] = last[0] == 216 && last[1] == 86 && last[2] == 0 ? 1 : 0;
+          //Orange pixel detection: first[0] == 216 && first[1] == 86 && first[2] == 0 ? 1 : 0;
+          forgeGuide[i][0] = first[0] != 198 || first[1] != 198 && first[2] != 198 ? 1 : 0;
+          forgeGuide[i][1] = second[0] != 198 || second[1] != 198 && second[2] != 198 ? 1 : 0;
+          forgeGuide[i][2] = last[0] != 198 || last[1] != 198 && last[2] != 198 ? 1 : 0;
         }
 
         let originalDistance = distance;
