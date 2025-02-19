@@ -414,7 +414,7 @@ export class ForgeComponent implements OnInit {
   minStepsToN(n: number): [number, number[]] {
     const moves = [-15, -9, -6, -3, 2, 7, 13, 16];
     const maxLimit = 150;
-    n = Math.abs(Math.round(n));
+    n = Math.round(n);
     type State = { sum: number, steps: number, path: number[] };
     const queue: State[] = [{ sum: 0, steps: 0, path: [] }];
     const visited = new Set<number>([0]);
