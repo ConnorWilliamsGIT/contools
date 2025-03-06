@@ -1,5 +1,71 @@
 <app-layout>
-  <div settings></div>
+  <div settings>
+    <h1 class="text-2xl font-bold">Boids Controls</h1>
+<!--    @HostListener('document:keydown', ['$event'])
+  handleKeyboardEvent(event: KeyboardEvent) {
+    let keyPressed = event.key;
+    console.log(keyPressed);
+    if (keyPressed === " ") {
+      this.toggleTime();
+    }
+    if (keyPressed === "x") {
+      this.computeBoids();
+    }
+    if (keyPressed === "g") {
+      this.showGrid = !this.showGrid;
+    }
+    if (keyPressed === "r") {
+      this.showBoidRange = !this.showBoidRange;
+    }
+    if (keyPressed === "t") {
+      this.showBoidTrail = !this.showBoidTrail;
+    }
+    if (keyPressed === "ArrowUp") {
+      if (event.getModifierState("Control")) {
+        this.boidTrailLength += 50;
+      } else if (event.getModifierState("Alt") && event.getModifierState("Shift")) {
+        this.spawnBoids(50, 'shark');
+      } else if (event.getModifierState("Alt")) {
+        this.spawnBoids(1, 'shark');
+      } else if (event.getModifierState("Shift")) {
+        this.spawnBoids(50, 'boid');
+      } else {
+        this.spawnBoids(1, 'boid');
+      }
+    }
+    if (keyPressed === "ArrowDown") {
+      if (event.getModifierState("Control")) {
+        this.boidTrailLength -= 50;
+        this.boidTrailLength = Math.max(this.boidTrailLength, 0);
+      } else if (event.getModifierState("Alt") && event.getModifierState("Shift")) {
+        this.removeBoid(50, 'shark');
+      } else if (event.getModifierState("Alt")) {
+        this.removeBoid(1, 'shark');
+      } else if (event.getModifierState("Shift")) {
+          this.removeBoid(50);
+      } else if (this.boidList.length > 0) {
+        this.removeBoid();
+      }
+    }
+    this.updateCanvas();
+  }-->
+    <p>Press <span class="font-bold">Space</span> to toggle time
+      <span class="font-bold">x</span> -- to step time<br>
+      <span class="font-bold">g</span> -- to toggle grid<br>
+      <span class="font-bold">r</span> -- to toggle boid range<br>
+      <span class="font-bold">t</span> -- to toggle boid trail<br>
+      <span class="font-bold">Arrow Up</span> -- to add boids<br>
+      <span class="font-bold">Arrow Down</span> -- to remove boids<br>
+      <span class="font-bold">Alt</span> + <span class="font-bold">Arrow Up</span> -- to add sharks<br>
+      <span class="font-bold">Alt</span> + <span class="font-bold">Arrow Down</span> -- to remove sharks<br>
+      <span class="font-bold">Shift</span> + <span class="font-bold">Arrow Up</span> -- to add 50 boids<br>
+      <span class="font-bold">Shift</span> + <span class="font-bold">Arrow Down</span> -- to remove 50 boids<br>
+      <span class="font-bold">Alt</span> + <span class="font-bold">Shift</span> + <span class="font-bold">Arrow Up</span> -- to add 50 sharks<br>
+      <span class="font-bold">Alt</span> + <span class="font-bold">Shift</span> + <span class="font-bold">Arrow Down</span> -- to remove 50 sharks<br>
+      <span class="font-bold">Ctrl</span> + <span class="font-bold">Arrow Up</span> -- to increase boid trail length<br>
+      <span class="font-bold">Ctrl</span> + <span class="font-bold">Arrow Down</span> -- to decrease boid trail length<br>
+    </p>
+  </div>
   <div #canvasFrame canvas class="w-full h-full relative">
     <canvas #canvas>
     </canvas>

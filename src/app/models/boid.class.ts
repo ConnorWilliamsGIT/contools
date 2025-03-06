@@ -1,28 +1,37 @@
 import {coordinate} from './coordinate.type';
+import {boidInteraction} from './boidInteraction.dict';
+import {boidGroups} from './boidType.dict';
 
 export class Boid {
   public pos: coordinate = {x: 0, y: 0};
   public vel: coordinate = {x: 0, y: 0};
   public heading: number = 0;
 
-  public maxSpeed: number = 300;
-  public minSpeed: number = 150;
-  public protectedRange: number = 20;
-  public visualRange: number = 80;
-  public separationFactor: number = 0.05;
-  public alignmentFactor: number = 0.04;
-  public cohesionFactor: number = 0.0001;
-  public turnFactor: number = 18;
-  public timeLast: number = 0;
+  public boidType: string = boidGroups['boid']['type'];
+
+  private timeLast = 0;
+
+  public settings = {
+    protectedRange: 10,
+    visualRange: 80,
+    maxSpeed: 300,
+    minSpeed: 150,
+    turnFactor: 4,
+    colour: "white"
+  }
 
   public xIndex: number = 0;
   public yIndex: number = 0;
 
-  constructor(x: number, y: number, heading: number = 0.01) {
+  constructor(x: number, y: number, boidType: string = boidGroups['boid']['type'], heading: number = 0.01) {
     this.pos.x = x;
     this.pos.y = y;
-    this.xIndex = Math.floor(this.pos.x / (2 * this.visualRange));
-    this.yIndex = Math.floor(this.pos.y / (2 * this.visualRange));
+
+    this.boidType = boidType;
+    this.settings.colour = boidGroups[boidType]['colour'];
+
+    this.xIndex = Math.floor(this.pos.x / (2 * this.settings.visualRange));
+    this.yIndex = Math.floor(this.pos.y / (2 * this.settings.visualRange));
     this.heading = heading;
     this.timeLast = Date.now();
   }
@@ -38,52 +47,70 @@ export class Boid {
     top: number,
     bottom: number
   }) {
-    let xVelAvg: number = 0;
-    let yVelAvg: number = 0;
+    let xVelAvg: {[index: string] : number} = {};
+    let yVelAvg: {[index: string] : number} = {};
 
-    let xPosAvg: number = 0;
-    let yPosAvg: number = 0;
+    let xPosAvg: {[index: string] : number} = {};
+    let yPosAvg: {[index: string] : number} = {};
 
-    let neighborCount: number = 0;
+    let neighborCount: {[index: string] : number} = {};
+
+    for (let boidGroup in boidGroups) {
+      let boidType = boidGroups[boidGroup]['type'];
+      xVelAvg[boidType] = 0;
+      yVelAvg[boidType] = 0;
+      xPosAvg[boidType] = 0;
+      yPosAvg[boidType] = 0;
+      neighborCount[boidType] = 0;
+    }
 
     boids.forEach((boid, index) => {
       const distance = distances.get(this)?.get(boid) || 0;
-      if (distance < this.protectedRange) {
-        this.vel.x += (this.pos.x - boid.pos.x) * this.separationFactor;
-        this.vel.y += (this.pos.y - boid.pos.y) * this.separationFactor;
+      if (distance < this.settings.protectedRange) {
+        this.vel.x += (this.pos.x - boid.pos.x) * boidInteraction[this.boidType][boid.boidType].separationFactor;
+        this.vel.y += (this.pos.y - boid.pos.y) * boidInteraction[this.boidType][boid.boidType].separationFactor;
       }
-      if (distance < this.visualRange && distance > this.protectedRange) {
-        xVelAvg += boid.vel.x;
-        yVelAvg += boid.vel.y;
-        xPosAvg += boid.pos.x;
-        yPosAvg += boid.pos.y;
-        neighborCount++;
+      if (distance < this.settings.visualRange && distance > this.settings.protectedRange) {
+        this.vel.x += (this.pos.x - boid.pos.x) * boidInteraction[this.boidType][boid.boidType].avoidFactor;
+        this.vel.y += (this.pos.y - boid.pos.y) * boidInteraction[this.boidType][boid.boidType].avoidFactor;
+        xVelAvg[boid.boidType] += boid.vel.x;
+        yVelAvg[boid.boidType] += boid.vel.y;
+        xPosAvg[boid.boidType] += boid.pos.x;
+        yPosAvg[boid.boidType] += boid.pos.y;
+        neighborCount[boid.boidType]++;
       }
     });
 
-    if (neighborCount > 0) {
-      xVelAvg /= neighborCount;
-      yVelAvg /= neighborCount;
-      this.vel.x += (xVelAvg - this.vel.x) * this.alignmentFactor;
-      this.vel.y += (yVelAvg - this.vel.y) * this.alignmentFactor;
 
-      xPosAvg /= neighborCount;
-      yPosAvg /= neighborCount;
-      this.vel.x += (xPosAvg - this.pos.x) * this.cohesionFactor;
-      this.vel.y += (yPosAvg - this.pos.y) * this.cohesionFactor;
+    for (let boidGroup in boidGroups) {
+      let boidType = boidGroups[boidGroup]['type'];
+
+      if (neighborCount[boidType] > 0) {
+        xVelAvg[boidType] /= neighborCount[boidType];
+        yVelAvg[boidType] /= neighborCount[boidType];
+        this.vel.x += (xVelAvg[boidType] - this.vel.x) * boidInteraction[this.boidType][boidType].alignmentFactor;
+        this.vel.y += (yVelAvg[boidType] - this.vel.y) * boidInteraction[this.boidType][boidType].alignmentFactor;
+
+        xPosAvg[boidType] /= neighborCount[boidType];
+        yPosAvg[boidType] /= neighborCount[boidType];
+        this.vel.x += (xPosAvg[boidType] - this.pos.x) * boidInteraction[this.boidType][boidType].cohesionFactor;
+        this.vel.y += (yPosAvg[boidType] - this.pos.y) * boidInteraction[this.boidType][boidType].cohesionFactor;
+      }
     }
+
+
 
     if (this.pos.x < margin.left) {
-      this.vel.x += this.turnFactor;
+      this.vel.x += this.settings.turnFactor;
     }
     if (this.pos.x > margin.right) {
-      this.vel.x -= this.turnFactor;
+      this.vel.x -= this.settings.turnFactor;
     }
     if (this.pos.y < margin.top) {
-      this.vel.y += this.turnFactor;
+      this.vel.y += this.settings.turnFactor;
     }
     if (this.pos.y > margin.bottom) {
-      this.vel.y -= this.turnFactor;
+      this.vel.y -= this.settings.turnFactor;
     }
 
     let speed = Math.sqrt(this.vel.x * this.vel.x + this.vel.y * this.vel.y);
@@ -92,18 +119,24 @@ export class Boid {
       speed = 0;
     }
 
-    if (speed > this.maxSpeed) {
-      this.vel.x = (this.vel.x / speed) * this.maxSpeed;
-      this.vel.y = (this.vel.y / speed) * this.maxSpeed;
+    if (speed > this.settings.maxSpeed) {
+      this.vel.x = (this.vel.x / speed) * this.settings.maxSpeed;
+      this.vel.y = (this.vel.y / speed) * this.settings.maxSpeed;
     }
-    if (speed < this.minSpeed) {
-      this.vel.x = (this.vel.x / speed) * this.minSpeed;
-      this.vel.y = (this.vel.y / speed) * this.minSpeed;
+    if (speed < this.settings.minSpeed) {
+      this.vel.x = (this.vel.x / speed) * this.settings.minSpeed;
+      this.vel.y = (this.vel.y / speed) * this.settings.minSpeed;
     }
     if (speed == 0) {
-      this.vel.x = this.minSpeed * Math.sin(this.heading + Math.PI);
-      this.vel.y = -this.minSpeed * Math.cos(this.heading);
+      this.vel.x = this.settings.minSpeed * Math.sin(this.heading + Math.PI);
+      this.vel.y = -this.settings.minSpeed * Math.cos(this.heading);
     }
+
+    let angleRange = 1;
+    let randomAngle = (Math.random() * 2 * angleRange - angleRange) * Math.PI / 180;
+    this.vel.x = this.vel.x * Math.cos(randomAngle) - this.vel.y * Math.sin(randomAngle);
+    this.vel.y = this.vel.x * Math.sin(randomAngle) + this.vel.y * Math.cos(randomAngle);
+
 
     let timeStep = this.getTimeStep();
     this.pos.x += this.vel.x * timeStep;
