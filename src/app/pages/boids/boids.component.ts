@@ -201,7 +201,6 @@ export class BoidsComponent implements AfterViewInit {
   @HostListener('document:keydown', ['$event'])
   handleKeyboardEvent(event: KeyboardEvent) {
     let keyPressed = event.key;
-    console.log(keyPressed);
     if (keyPressed === " ") {
       this.toggleTime();
     }
@@ -255,13 +254,14 @@ export class BoidsComponent implements AfterViewInit {
       }
 
       if (this.boidList[i].boidType === type) {
-        this.gridLists[this.boidList[i].xIndex][this.boidList[i].yIndex].filter((boid: Boid) => boid !== this.boidList[i]);
+        if (this.gridLists[this.boidList[i].xIndex]?.[this.boidList[i].yIndex]) {
+          this.gridLists[this.boidList[i].xIndex][this.boidList[i].yIndex] = this.gridLists[this.boidList[i].xIndex][this.boidList[i].yIndex].filter((boid: Boid) => boid !== this.boidList[i]);
+        }
         this.boidTrail.delete(this.boidList[i]);
         this.boidList.splice(i, 1);
         count++;
       }
     }
-
   }
 
   computeBoids() {
