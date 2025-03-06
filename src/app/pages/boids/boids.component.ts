@@ -216,6 +216,16 @@ export class BoidsComponent implements AfterViewInit {
     if (keyPressed === "t") {
       this.showBoidTrail = !this.showBoidTrail;
     }
+    if (keyPressed === "c") {
+      this.showBoidRange = false;
+      this.showGrid = false;
+      this.showBoidTrail = false;
+    }
+    if (keyPressed === "C") {
+      this.showBoidRange = true;
+      this.showGrid = true;
+      this.showBoidTrail = true;
+    }
     if (keyPressed === "ArrowUp") {
       if (event.getModifierState("Control")) {
         this.boidTrailLength += 50;
