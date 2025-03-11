@@ -21,6 +21,13 @@ export const routes: Routes = [
     }
   },
   {
+    path: 'pong',
+    loadComponent: () => import('./pages/pong/pong.component').then(m => m.PongComponent),
+    data: {
+      pageName: 'Pong'
+    }
+  },
+  {
     path: 'forge',
     loadComponent: () => import('./pages/forge/forge.component').then(m => m.ForgeComponent),
     data: {
