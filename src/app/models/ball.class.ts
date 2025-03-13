@@ -9,7 +9,7 @@ export class Ball {
 
   constructor(x: number, y: number, radius: number = 10, color: string = "white") {
     this.pos = {x: x, y: y};
-    this.vel = {x: 1, y: 1};
+    this.vel = {x: Math.round(Math.random()) * 2 - 1, y: Math.round(Math.random()) * 2 - 1};
     this.radius = radius;
     this.color = color;
   }
@@ -25,5 +25,20 @@ export class Ball {
   update() {
     this.pos.x += this.vel.x * this.speed;
     this.pos.y += this.vel.y * this.speed;
+  }
+
+  setPos(x: number, y: number) {
+    this.pos.x = x;
+    this.pos.y = y;
+  }
+
+  setVel(x: number, y: number) {
+    this.vel.x = x;
+    this.vel.y = y;
+  }
+
+  setRandomVel() {
+    this.vel.x = Math.round(Math.random()) * 2 - 1;
+    this.vel.y = Math.round(Math.random()) * 2 - 1;
   }
 }

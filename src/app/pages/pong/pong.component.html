@@ -1,8 +1,11 @@
-<app-layout>
-  <div settings></div>
-  <div #canvasFrame canvas class="w-full h-full relative">
-    <canvas #canvas>
-    </canvas>
-  </div>
-</app-layout>
+<div class="flex flex-col min-h-screen">
+  <app-navbar class="flex-grow-0"/>
 
+  <div
+    class="static flex-grow flex inset-0 bg-base-100 bg-[radial-gradient(#94a3b8_1px,transparent_1px)] [background-size:40px_40px] [background-position:16px_36px] row-span-2">
+    <div #canvasFrame class="w-full flex-grow relative">
+      <canvas #canvas>
+      </canvas>
+    </div>
+  </div>
+</div>
