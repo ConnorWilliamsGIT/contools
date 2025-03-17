@@ -37,6 +37,10 @@ export class Ball {
     this.vel.y = y;
   }
 
+  setSpeed(speed: number) {
+    this.speed = speed;
+  }
+
   setRandomVel() {
     this.vel.x = Math.round(Math.random()) * 2 - 1;
     this.vel.y = Math.round(Math.random()) * 2 - 1;

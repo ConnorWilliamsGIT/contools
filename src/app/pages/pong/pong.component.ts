@@ -3,6 +3,8 @@ import {LayoutComponent} from "../../components/layout/layout.component";
 import {Ball} from "../../models/ball.class";
 import {coordinate} from "../../models/coordinate.type";
 import {NavbarComponent} from "../../components/navbar/navbar.component";
+import {update} from "@angular-devkit/build-angular/src/tools/esbuild/angular/compilation/parallel-worker";
+import {animation} from "@angular/animations";
 
 @Component({
   selector: 'app-pong',
@@ -28,6 +30,12 @@ export class PongComponent implements AfterViewInit {
   private p2Handle: coordinate = {x: 0, y: 0};
 
   private expectedBounce: number = 1;
+  private bounceCount: number = 0;
+  private speedUpdated: boolean = false;
+
+  private animationTime: number = 0;
+  private winAnimationPlaying: boolean = false;
+  private scorer: number = 0;
 
   private handleDimDefault: coordinate = {x: 20, y: 200};
 
@@ -113,6 +121,10 @@ export class PongComponent implements AfterViewInit {
     this.ctx.fillText(this.score[0].toString(), this.ctx.canvas.width * 9 / 20, this.ctx.canvas.height / 10);
     this.ctx.fillText(this.score[1].toString(), this.ctx.canvas.width * 11 / 20, this.ctx.canvas.height / 10);
 
+    if (this.winAnimationPlaying) {
+      this.winAnimation();
+    }
+
     this.drawHandle(this.p1Handle);
     this.drawHandle(this.p2Handle);
   }
@@ -172,11 +184,17 @@ export class PongComponent implements AfterViewInit {
     this.paused = true;
     this.ball.setPos(this.ctx.canvas.width / 2, this.ctx.canvas.height / 2);
     this.ball.setRandomVel();
+
+    this.bounceCount = 0;
+    this.speedUpdated = false;
+    this.ball.setSpeed(5);
+
     if (this.ball.vel.x > 0) {
       this.expectedBounce = 2;
     } else {
       this.expectedBounce = 1;
     }
+
     if (fullRestart) {
       this.score = [0, 0];
     }
@@ -190,11 +208,41 @@ export class PongComponent implements AfterViewInit {
   scorePoint(player: number) {
     this.restart();
     this.score[player]++;
+    this.animationTime = 0;
+    this.winAnimationPlaying = true;
+    this.scorer = player;
+  }
+
+  winAnimation() {
+    this.animationTime += 1000 / 60;
+
+    let animationLength = 500;
+
+    let animationProgress = Math.round(100*(this.animationTime/animationLength))/100;
+
+    if (this.animationTime > animationLength) {
+      this.winAnimationPlaying = false;
+      return;
+    }
+
+    this.ctx.beginPath();
+    this.ctx.rect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
+    let colourTweak = 5;
+    let colour = this.scorer == 1 ? "230, 50, 50," : "10, 90, 190,";
+    this.ctx.fillStyle = "rgba(" + colour + (1/colourTweak-animationProgress/colourTweak) + ")";
+    this.ctx.fill();
+    this.ctx.closePath();
   }
 
   computePositions() {
     const handleSpeed = 5;
 
+    // ball movement
+    if (!this.paused) {
+      this.computeBallPosition();
+    }
+
+    // handle movement
     if (this.isKeyDown("w")) {
       this.p1Handle.y -= handleSpeed;
     }
@@ -208,6 +256,7 @@ export class PongComponent implements AfterViewInit {
       this.p2Handle.y += handleSpeed;
     }
 
+    // handle bounds
     if (this.p1Handle.y < this.handleHeight / 2) {
       this.p1Handle.y = this.handleHeight / 2;
     }
@@ -221,8 +270,15 @@ export class PongComponent implements AfterViewInit {
       this.p2Handle.y = this.ctx.canvas.height - this.handleHeight / 2;
     }
 
-    if (!this.paused) {
-      this.computeBallPosition();
+
+
+    if (this.bounceCount % 2 == 0 && !this.speedUpdated && this.bounceCount != 0) {
+      this.ball.setSpeed(this.ball.speed * 1.1);
+      console.log("Speed updated", this.bounceCount, this.speedUpdated);
+      this.speedUpdated = true;
+    } else if (this.bounceCount % 2 != 0) {
+      console.log("Speed not updated");
+      this.speedUpdated = false;
     }
 
     this.updateCanvas();
@@ -231,10 +287,12 @@ export class PongComponent implements AfterViewInit {
   computeBallPosition() {
     const coyoteWidth = 10;
 
-    if (this.ball.pos.x + this.ball.radius < 0 || this.ball.pos.x - this.ball.radius > this.ctx.canvas.width) {
+    // If the ball is out of the canvas, it is reset to the center.
+    if (this.ball.pos.x + this.ball.radius < -100 || this.ball.pos.x - this.ball.radius > this.ctx.canvas.width+100) {
       this.ball.setPos(this.ctx.canvas.width / 2, this.ctx.canvas.height / 2);
     }
 
+    // If the ball is out of the canvas on the sides, the opponent scores a point
     if (this.ball.pos.x + this.ball.radius > this.ctx.canvas.width) {
       this.scorePoint(0);
       return;
@@ -244,17 +302,22 @@ export class PongComponent implements AfterViewInit {
       return;
     }
 
+    // If the ball hits the top or bottom of the canvas, it bounces
     if ((this.ball.pos.y + this.ball.radius) > this.ctx.canvas.height || (this.ball.pos.y - this.ball.radius) < 0) {
       this.ball.vel.y *= -1;
     }
 
-    if (this.expectedBounce == 1 && this.ball.pos.x - this.ball.radius < this.p1Handle.x + 10 && this.ball.pos.x - this.ball.radius > this.p1Handle.x - 10 && this.ball.pos.y + this.ball.radius > this.p1Handle.y - 50 - coyoteWidth && this.ball.pos.y - this.ball.radius < this.p1Handle.y + 50 + coyoteWidth) {
+    // If the ball hits a handle, it bounces
+    if (this.expectedBounce == 1 && this.ball.pos.x - this.ball.radius < this.p1Handle.x + 15 && this.ball.pos.x - this.ball.radius > this.p1Handle.x - 15 && this.ball.pos.y + this.ball.radius > this.p1Handle.y - 50 - coyoteWidth && this.ball.pos.y - this.ball.radius < this.p1Handle.y + 50 + coyoteWidth) {
       this.ball.vel.x *= -1;
       this.expectedBounce = 2;
+      this.bounceCount++;
     }
-    if (this.expectedBounce == 2 && this.ball.pos.x + this.ball.radius > this.p2Handle.x - 10 && this.ball.pos.x + this.ball.radius < this.p2Handle.x + 10 && this.ball.pos.y + this.ball.radius > this.p2Handle.y - 50 - coyoteWidth && this.ball.pos.y - this.ball.radius < this.p2Handle.y + 50 + coyoteWidth) {
+
+    if (this.expectedBounce == 2 && this.ball.pos.x + this.ball.radius > this.p2Handle.x - 15 && this.ball.pos.x + this.ball.radius < this.p2Handle.x + 15 && this.ball.pos.y + this.ball.radius > this.p2Handle.y - 50 - coyoteWidth && this.ball.pos.y - this.ball.radius < this.p2Handle.y + 50 + coyoteWidth) {
       this.ball.vel.x *= -1;
       this.expectedBounce = 1;
+      this.bounceCount++;
     }
 
     this.ball.update();
