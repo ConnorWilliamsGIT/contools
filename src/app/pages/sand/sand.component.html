@@ -1,0 +1,73 @@
+<div #sliderBox class="absolute top-4 right-4 bg-white/30 p-4 shadow-lg rounded-xl z-10 backdrop-blur-md">
+  <div class="flex flex-wrap items-center p-1 gap-1 mb-2">
+    <h1 class="text-2xl font-bold flex-1 text-secondary">Contools</h1>
+    <div class="dropdown dropdown-hover dropdown-bottom dropdown-end">
+      <div class="btn m-1 w-32" role="button" tabindex="0">
+        {{ pageName }}
+        <svg aria-hidden="true" class="w-4 h-4" fill="none"
+             height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg">
+          <path d="m19 9-7 7-7-7" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+        </svg>
+      </div>
+      <ul
+        class="dropdown-content outline outline-base-content/30 outline-2 menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow space-y-1"
+        tabindex="-1">
+        <li>
+          <a ariaCurrentWhenActive="page" routerLink="/graphs" routerLinkActive="active bg-primary">
+            Graphs
+          </a>
+        </li>
+        <li>
+          <a ariaCurrentWhenActive="page" routerLink="/boids" routerLinkActive="active">
+            Boids
+          </a>
+        </li>
+        <li>
+          <a ariaCurrentWhenActive="page" routerLink="/pong" routerLinkActive="active">
+            Pong
+          </a>
+        </li>
+        <li>
+          <a ariaCurrentWhenActive="page" routerLink="/sand" routerLinkActive="active">
+            Sand
+          </a>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <label for="windSpeed" class="text-black">Wind Speed:</label>
+  <input
+    id="windSpeed"
+    type="range"
+    min="-500"
+    max="500"
+    step="1"
+    [(ngModel)]="this.windSpeed"
+    class="w-full bg-orange-300"
+  />
+  <span class="text-black" style="display: inline-block; width: 3ch; text-align: right;">{{ this.windSpeed }}</span><br>
+  <label for="windSpeed" class="text-black">Sand Per Tick:</label>
+  <input
+    id="sandRate"
+    type="range"
+    min="0"
+    max="50"
+    step="1"
+    [(ngModel)]="this.sandRate"
+    class="w-full bg-orange-300"
+  />
+  <span class="text-black" style="display: inline-block; width: 3ch; text-align: right;">{{ this.sandRate }}</span><br>
+
+  <button class="mt-4 bg-orange-400 text-white px-2 py-1 rounded" (click)="clearPointForces()">Clear Point Forces</button>
+
+</div>
+<div class="flex flex-col min-h-screen">
+  <div
+    class="static flex-grow flex inset-0 bg-base-100 bg-[radial-gradient(#94a3b8_1px,transparent_1px)] [background-size:40px_40px] [background-position:16px_36px] row-span-2">
+    <div #canvasFrame class="w-full flex-grow relative">
+      <canvas #canvas>
+      </canvas>
+    </div>
+  </div>
+</div>

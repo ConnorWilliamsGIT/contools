@@ -34,5 +34,12 @@ export const routes: Routes = [
       pageName: 'Forge'
     }
   },
+  {
+    path: 'sand',
+    loadComponent: () => import('./pages/sand/sand.component').then(m => m.SandComponent),
+    data: {
+      pageName: 'Sand'
+    }
+  },
 
 ];
